@@ -1,0 +1,42 @@
+name: Development Branch Workflow
+
+on:
+  push:
+    branches: 
+      - 'feat/**'
+      - 'fix/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+  pull_request:
+    branches: [ develop, main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+        
+      - name: Build Docker image (without pushing)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: ${{ github.event.repository.name }}:${{ github.ref_name }}
