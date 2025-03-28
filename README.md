@@ -135,3 +135,11 @@ El proyecto utiliza GitHub Actions para:
 ## 📄 Licencia
 
 Este proyecto está licenciado bajo la licencia Apache 2.0 - consulte el archivo [LICENSE](LICENSE) para más detalles.
+
+
+
+Add-Migration FirstMigrationTest -Project Intrastructure -StartupProject NeonNovaApp
+
+
+
+Update-Database -Project Intrastructure -StartupProject NeonNovaApp
