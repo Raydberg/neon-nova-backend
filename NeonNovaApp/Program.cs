@@ -5,6 +5,7 @@ using Domain.Interfaces;
 using Intrastructure.Data;
 using Intrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,7 +29,11 @@ builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddOpenApi(options =>
+{
+  
+});
 
 var app = builder.Build();
 
@@ -36,6 +41,24 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    /**
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "NeonNovaApi");
+    });
+    */
+   
+    app.MapScalarApiReference(options =>
+    {
+        options
+        .WithTitle("NeonNovaApi")
+        .WithTheme(ScalarTheme.Mars)
+        .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
+        .WithPreferredScheme("Api Scheme");
+        //.WithApiKeyAuthentication(keyOptions => keyOptions.Token = "apiKey")
+        
+    });
 }
 
 app.UseHttpsRedirection();
