@@ -143,3 +143,8 @@ Add-Migration FirstMigrationTest -Project Intrastructure -StartupProject NeonNov
 
 
 Update-Database -Project Intrastructure -StartupProject NeonNovaApp
+
+
+docker-compose down
+docker-compose build --no-cache
+docker-compose up
