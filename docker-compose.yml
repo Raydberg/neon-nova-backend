@@ -1,0 +1,17 @@
+services:
+  neon-nova-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: "neon-nova-db" 
+    environment:
+      SA_PASSWORD: "SqlPassword123"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    restart: unless-stopped
+
+volumes:
+  sqldata:
+    driver: local
