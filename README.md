@@ -98,15 +98,55 @@ Neon Nova Backend
    dotnet run --project NeonNovaApp
    ```
 
-### Docker
+## 🐳 Docker
 
-Para ejecutar con Docker:
+### Ejecutar con Docker Compose (Recomendado)
 
+El proyecto incluye un archivo `docker-compose.yml` que configura tanto la aplicación como una base de datos SQL Server:
+
+```bash
+# Iniciar todos los servicios
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f
+
+# Detener servicios
+docker-compose down
 ```
+
+## El docker-compose.yml configura:
+
+- neon-nova-db: SQL Server 2022 en el puerto 1433
+- Base de datos con credenciales: (Usuario: sa, Contraseña: SqlPassword123)
+- Volumen persistente para los datos: sqldata
+
+## Construir y ejecutar solo la aplicación
+
+### Si prefieres gestionar la base de datos por separado:
+```bash
+# Construir la imagen
 docker build -t neonnovaapp:latest .
-docker run -p 8080:80 neonnovaapp:latest
+
+# Ejecutar el contenedor
+docker run -p 8080:80 -e "ConnectionStrings__DefaultConnection=Server=tu-servidor-sql;Database=NeonNovaDB;User=sa;Password=tu-password;TrustServerCertificate=True" neonnovaapp:latest
 ```
 
+## Imágenes de Docker Hub
+Las imágenes oficiales están disponibles en Docker Hub:
+
+```bash
+# Descargar la última versión
+docker pull ${DOCKER_HUB_USERNAME}/neonnovaapp:latest
+
+# Ejecutar desde Docker Hub
+docker run -p 8080:80 ${DOCKER_HUB_USERNAME}/neonnovaapp:latest
+```
+
+## Documentación de la API
+```bash
+https://localhost:7256/scalar
+```
 ## 🧪 Tests
 
 Para ejecutar las pruebas:
@@ -135,16 +175,3 @@ El proyecto utiliza GitHub Actions para:
 ## 📄 Licencia
 
 Este proyecto está licenciado bajo la licencia Apache 2.0 - consulte el archivo [LICENSE](LICENSE) para más detalles.
-
-
-
-Add-Migration FirstMigrationTest -Project Intrastructure -StartupProject NeonNovaApp
-
-
-
-Update-Database -Project Intrastructure -StartupProject NeonNovaApp
-
-
-docker-compose down
-docker-compose build --no-cache
-docker-compose up
