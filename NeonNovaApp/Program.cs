@@ -71,5 +71,5 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.MapGet("/", () => Results.Ok(new { status = "API en funcionamiento", version = "1.0" }));
 app.Run();
