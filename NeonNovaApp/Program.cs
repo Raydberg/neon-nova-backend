@@ -11,9 +11,11 @@ using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Priorizar las variables de entorno para el puerto
-var port = Environment.GetEnvironmentVariable("PORT") ?? "80";
-builder.WebHost.UseUrls($"http://*:{port}");
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(80);
+});
 
 // Add services to the container.
 
@@ -72,4 +74,5 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapGet("/", () => Results.Ok(new { status = "API en funcionamiento", version = "1.0" }));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 app.Run();
