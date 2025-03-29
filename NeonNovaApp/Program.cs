@@ -11,15 +11,16 @@ using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Priorizar las variables de entorno para el puerto
+var port = Environment.GetEnvironmentVariable("PORT") ?? "80";
+builder.WebHost.UseUrls($"http://*:{port}");
+
 // Add services to the container.
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
-
 //Register Services
-
 builder.Services.AddScoped<IProductService,ProductService>();
 
 //Register Repositories
