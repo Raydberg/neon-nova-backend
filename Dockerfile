@@ -24,7 +24,7 @@ RUN dotnet publish "NeonNovaApp.csproj" -c Release -o /app/publish /p:UseAppHost
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-EXPOSE 80
+EXPOSE 8080
 EXPOSE 443
-ENV ASPNETCORE_URLS=http://+:80
+ENV ASPNETCORE_URLS=http://+:8080
 ENTRYPOINT ["dotnet", "NeonNovaApp.dll"]
