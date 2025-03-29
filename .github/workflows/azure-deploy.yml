@@ -26,6 +26,9 @@ jobs:
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           images: ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+          startup-command: ''
+          slot-name: production
+          runtime-stack: DOCKER|latest
       
       - name: Log deployment status
         run: |
