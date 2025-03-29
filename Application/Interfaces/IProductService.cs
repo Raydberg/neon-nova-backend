@@ -1,12 +1,8 @@
 ﻿using Application.DTOs.ProductsDTOs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Interfaces
 {
+    // Cumple el papel de Use Cases 
     public interface IProductService
     {
         Task<List<ProductDto>> GetAllAsync ();

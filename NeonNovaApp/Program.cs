@@ -5,6 +5,7 @@ using Domain.Interfaces;
 using Intrastructure.Data;
 using Intrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using NeonNovaApp.Middleware;
 using Scalar.AspNetCore;
 using System.Reflection;
 
@@ -60,6 +61,9 @@ if (app.Environment.IsDevelopment())
         
     });
 }
+
+// Middlewares
+app.UseGlobalExceptionHandler();
 
 app.UseHttpsRedirection();
 
