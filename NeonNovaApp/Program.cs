@@ -8,10 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using NeonNovaApp.Middleware;
 using Scalar.AspNetCore;
 using System.Reflection;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
-
-
 
 // Add services to the container.
 
@@ -19,7 +18,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 //Register Services
-builder.Services.AddScoped<IProductService,ProductService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 //Register Repositories
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
@@ -28,7 +27,7 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddAutoMapper(
     Assembly.GetExecutingAssembly(),
     typeof(Application.Mappings.MappingProduct).Assembly
-    //typeof(OtherNamespace.OtherMapping).Assembly
+//typeof(OtherNamespace.OtherMapping).Assembly
 );
 
 builder.Services.AddControllers();
@@ -36,8 +35,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi(options =>
 {
-  
+
 });
+
+// Agregar health checks y métricas de Prometheus
+builder.Services.AddHealthChecks()
+    .ForwardToPrometheus();
 
 var app = builder.Build();
 
@@ -46,13 +49,6 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 
-    /**
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/openapi/v1.json", "NeonNovaApi");
-    });
-    */
-   
     app.MapScalarApiReference(options =>
     {
         options
@@ -60,19 +56,26 @@ if (app.Environment.IsDevelopment())
         .WithTheme(ScalarTheme.Mars)
         .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
         .WithPreferredScheme("Api Scheme");
-        //.WithApiKeyAuthentication(keyOptions => keyOptions.Token = "apiKey")
-        
     });
 }
 
 // Middlewares
 app.UseGlobalExceptionHandler();
 
-app.UseHttpsRedirection();
+// Agregar métricas de Prometheus
+app.UseRouting();
+app.UseHttpMetrics(); // Añadir esta línea
+app.UseMetricServer(); // Añadir esta línea
 
+app.UseHttpsRedirection();
 app.UseAuthorization();
 
-app.MapControllers();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+    endpoints.MapMetrics(); 
+    endpoints.MapHealthChecks("/health");
+});
+
 app.MapGet("/", () => Results.Ok(new { status = "API en funcionamiento", version = "1.0" }));
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 app.Run();
