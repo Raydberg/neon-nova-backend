@@ -5,9 +5,9 @@ using Domain.Entities;
 
 namespace Application.Mappings
 {
-    public class MappingProfile: Profile
+    public class MappingProduct: Profile
     {
-        public MappingProfile ()
+        public MappingProduct ()
         {
             // Mapear de Product hacia ProductDTO 
             CreateMap<Product,ProductDto>();

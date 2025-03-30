@@ -12,10 +12,6 @@ using System.Reflection;
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenAnyIP(8080);
-});
 
 // Add services to the container.
 
@@ -29,7 +25,11 @@ builder.Services.AddScoped<IProductService,ProductService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 // Configurar automapper en nuestra aplicacio
-builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
+builder.Services.AddAutoMapper(
+    Assembly.GetExecutingAssembly(),
+    typeof(Application.Mappings.MappingProduct).Assembly
+    //typeof(OtherNamespace.OtherMapping).Assembly
+);
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
