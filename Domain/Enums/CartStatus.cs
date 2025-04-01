@@ -1,6 +1,6 @@
 ﻿namespace Domain.Enums;
 
-public enum CartStatus
+public enum CartShopStatus
 {
     Active,
     Completed,

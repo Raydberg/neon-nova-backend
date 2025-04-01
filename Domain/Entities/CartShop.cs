@@ -14,7 +14,7 @@ public class CartShop
     public DateTime CreationDate { get; set; }
 
     [Required(ErrorMessage = "El estado del carrito es obligatorio.")]
-    public CartStatus Status { get; set; }
+    public CartShopStatus Status { get; set; }
 
     // Propiedades de navegación.
     public User User { get; set; }
