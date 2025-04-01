@@ -8,26 +8,29 @@ using Microsoft.EntityFrameworkCore;
 using NeonNovaApp.Middleware;
 using Scalar.AspNetCore;
 using System.Reflection;
+using DotNetEnv;
 using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Cargar variables de entorno desde el archivo .env
+Env.Load();
+
 // Add services to the container.
+var connectionString = Environment.GetEnvironmentVariable("DefaultConnection");
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-//Register Services
+// Register Services
 builder.Services.AddScoped<IProductService, ProductService>();
 
-//Register Repositories
+// Register Repositories
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
-// Configurar automapper en nuestra aplicacio
+// Configurar automapper en nuestra aplicacion
 builder.Services.AddAutoMapper(
     Assembly.GetExecutingAssembly(),
     typeof(Application.Mappings.MappingProduct).Assembly
-//typeof(OtherNamespace.OtherMapping).Assembly
+    // typeof(OtherNamespace.OtherMapping).Assembly
 );
 
 builder.Services.AddControllers();
@@ -35,10 +38,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi(options =>
 {
-
+    // ConfiguraciÃ³n de OpenAPI
 });
 
-// Agregar health checks y métricas de Prometheus
+// Agregar health checks y mÃ©tricas de Prometheus
 builder.Services.AddHealthChecks()
     .ForwardToPrometheus();
 
@@ -62,10 +65,10 @@ if (app.Environment.IsDevelopment())
 // Middlewares
 app.UseGlobalExceptionHandler();
 
-// Agregar métricas de Prometheus
+// Agregar mÃ©tricas de Prometheus
 app.UseRouting();
-app.UseHttpMetrics(); // Añadir esta línea
-app.UseMetricServer(); // Añadir esta línea
+app.UseHttpMetrics(); 
+app.UseMetricServer(); 
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
@@ -73,7 +76,7 @@ app.UseAuthorization();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
-    endpoints.MapMetrics(); 
+    endpoints.MapMetrics();
     endpoints.MapHealthChecks("/health");
 });
 
