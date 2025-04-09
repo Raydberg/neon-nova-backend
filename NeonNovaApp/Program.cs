@@ -8,7 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using NeonNovaApp.Middleware;
 using Scalar.AspNetCore;
 using System.Reflection;
+using System.Text;
+using Domain.Entities;
 using DotNetEnv;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
 using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +23,37 @@ Env.Load();
 // Add services to the container.
 var connectionString = Environment.GetEnvironmentVariable("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+
+//Configuracion de Identity
+var KeyJwt = Environment.GetEnvironmentVariable("key_jwt");
+builder.Services.AddIdentityCore<Users>(opt =>
+    {
+        opt.SignIn.RequireConfirmedEmail = true;
+        opt.Password.RequiredLength = 6;
+        opt.User.RequireUniqueEmail = true;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<UserManager<Users>>();
+//Autenticar Usuarios
+builder.Services.AddScoped<SignInManager<Users>>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddAuthentication().AddJwtBearer(opt =>
+{
+    opt.MapInboundClaims = false;
+    opt.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        //Llave JWT
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(KeyJwt!)),
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
 
 // Register Services
 builder.Services.AddScoped<IProductService, ProductService>();
@@ -55,10 +90,10 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference(options =>
     {
         options
-        .WithTitle("NeonNovaApi")
-        .WithTheme(ScalarTheme.Mars)
-        .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
-        .WithPreferredScheme("Api Scheme");
+            .WithTitle("NeonNovaApi")
+            .WithTheme(ScalarTheme.Mars)
+            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
+            .WithPreferredScheme("Api Scheme");
     });
 }
 
@@ -67,8 +102,8 @@ app.UseGlobalExceptionHandler();
 
 // Agregar métricas de Prometheus
 app.UseRouting();
-app.UseHttpMetrics(); 
-app.UseMetricServer(); 
+app.UseHttpMetrics();
+app.UseMetricServer();
 
 app.UseHttpsRedirection();
 app.UseAuthorization();

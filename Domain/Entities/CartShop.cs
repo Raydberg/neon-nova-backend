@@ -17,6 +17,6 @@ public class CartShop
     public CartShopStatus Status { get; set; }
 
     // Propiedades de navegación.
-    public User User { get; set; }
+    public Users Users { get; set; }
     public ICollection<CartShopDetail> CartShopDetails { get; set; } = new List<CartShopDetail>();
 }

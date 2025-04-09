@@ -19,7 +19,7 @@ public class Order
     [Required] public OrderStatus Status { get; set; }
 
     // Propiedad de navegación: cada orden pertenece a un usuario.
-    public User User { get; set; }
+    public Users Users { get; set; }
 
     // Colecciones de navegación.
     public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
