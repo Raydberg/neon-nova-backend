@@ -27,20 +27,20 @@ namespace Intrastructure.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<IdentityUser>()
-                .Ignore(u => u.UserName)
-                ;
+            // modelBuilder.Entity<IdentityUser>()
+            //     .Ignore(u => u.UserName)
+            //     ;
             modelBuilder.Entity<Users>()
-                .Ignore(u => u.UserName)
-                .Ignore(u => u.PhoneNumber)
+                // .Ignore(u => u.UserName)
+                // .Ignore(u => u.PhoneNumber)
                 .Ignore(u => u.SecurityStamp)
-                .Ignore(u => u.EmailConfirmed)
-                .Ignore(u => u.NormalizedEmail)
+                // .Ignore(u => u.EmailConfirmed)
+                // .Ignore(u => u.NormalizedEmail)
                 .Ignore(u => u.PhoneNumberConfirmed)
-                .Ignore(u => u.PasswordHash)
+                // .Ignore(u => u.PasswordHash)
                 .Ignore(u => u.TwoFactorEnabled)
-                .Ignore(u=> u.NormalizedUserName)
-                .Ignore(u=> u.ConcurrencyStamp)
+                // .Ignore(u=> u.NormalizedUserName)
+                // .Ignore(u=> u.ConcurrencyStamp)
                 .Ignore(u=> u.LockoutEnabled)
                 .Ignore(u=> u.LockoutEnd)
                 .Ignore(u=> u.AccessFailedCount);
