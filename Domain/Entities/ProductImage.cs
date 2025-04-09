@@ -15,7 +15,10 @@ public class ProductImage
 
     [MaxLength(500, ErrorMessage = "El texto alternativo no debe superar los 500 caracteres.")]
     public string AltText { get; set; }
+    //Requerido para cloudinary
+    public string PublicId { get; set; }
 
+    // public string SecureUrl { get; set; }
     // Propiedad de navegación.
     public Product Product { get; set; }
 }

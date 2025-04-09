@@ -26,8 +26,9 @@ namespace Intrastructure.Data
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<User>()
-                .HasIndex(u => u.Email)
-                .IsUnique();
+                .HasOne(u => u.Role)
+                .WithMany(r => r.Users)
+                .HasForeignKey(u => u.RoleId);
 
             // Índice para Product.CategoryId.
             modelBuilder.Entity<Product>()
@@ -39,15 +40,17 @@ namespace Intrastructure.Data
 
             // Índice compuesto en ProductComment (ProductId, UserId).
             modelBuilder.Entity<ProductComment>()
-                .HasIndex(pc => new { pc.ProductId, pc.UserId });
+                .HasIndex(pc => new { pc.ProductId, pc.UserId })
+                .IsUnique() //-> Si solo queremos que el usuario tenga un comentario por producto
+                ;
 
             // Índice para Cart.UserId.
             modelBuilder.Entity<CartShop>()
                 .HasIndex(c => c.UserId);
 
             // Índice para OrderDetail.OrderId.
-            modelBuilder.Entity<OrderDetail>()
-                .HasIndex(od => od.OrderId);
+            // modelBuilder.Entity<OrderDetail>()
+            //     .HasIndex(od => od.OrderId);
 
             // Índice para CartDetail.CartId.
             modelBuilder.Entity<CartShopDetail>()

@@ -17,6 +17,7 @@ public class User
     [Required(ErrorMessage = "El correo electrónico es obligatorio.")]
     [MaxLength(500, ErrorMessage = "El correo electrónico no debe superar los 500 caracteres.")]
     [EmailAddress(ErrorMessage = "El correo electrónico no es válido.")]
+    
     public string Email { get; set; }
 
     [Required(ErrorMessage = "La contraseña es obligatoria.")]
@@ -24,7 +25,6 @@ public class User
     public string Password { get; set; }
 
     [Required(ErrorMessage = "El teléfono es obligatorio.")]
-    [Phone(ErrorMessage = "El teléfono no es válido.")]
     public string Phone { get; set; }
 
     [Required(ErrorMessage = "El rol es obligatorio.")]
