@@ -25,7 +25,7 @@ namespace NeonNovaApp.Controllers
             _userManager = userManager;
             _signInManager = signInManager;
         }
-
+ 
         [HttpPost("register")]
         public async Task<ActionResult<AuthenticationResponseDto>> Register(CredentialsUserDto dto)
         {

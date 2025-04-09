@@ -13,6 +13,8 @@ using Domain.Entities;
 using DotNetEnv;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using NeonNovaApp.Services;
 using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -57,6 +59,10 @@ builder.Services.AddAuthentication().AddJwtBearer(opt =>
 
 // Register Services
 builder.Services.AddScoped<IProductService, ProductService>();
+/**
+ * Transient ya que no necesitamos compartir el estado
+ */
+builder.Services.AddTransient<ICurrentUserService, CurrentUserService>();
 
 // Register Repositories
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
@@ -70,10 +76,37 @@ builder.Services.AddAutoMapper(
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// Documentacion Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi(options =>
 {
     // Configuración de OpenAPI
+});
+builder.Services.AddSwaggerGen(opt =>
+{
+    opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        BearerFormat = "JWT",
+        Description = "JWT Authorization header using the Bearer scheme.",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer"
+    });
+    opt.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Id = "Bearer",
+                    Type = ReferenceType.SecurityScheme
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
 // Agregar health checks y métricas de Prometheus
@@ -82,21 +115,34 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+app.UseSwagger(opt => { opt.RouteTemplate = "openapi/{documentName}.json"; });
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-
-    app.MapScalarApiReference(options =>
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
     {
-        options
+        c.SwaggerEndpoint("/openapi/v1.json", "NeonNovaAPI v1");
+        c.RoutePrefix = "swagger";
+    });
+// Documentacion con Scalar
+    app.MapScalarApiReference(opt =>
+    {
+        opt
             .WithTitle("NeonNovaApi")
             .WithTheme(ScalarTheme.Mars)
             .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
-            .WithPreferredScheme("Api Scheme");
+            .WithPreferredScheme("Api Scheme")
+            .WithDefaultHttpClient(ScalarTarget.Http, ScalarClient.Http11)
+            .WithTheme(ScalarTheme.BluePlanet)
+            // .WithTheme(ScalarTheme.DeepSpace)
+            ;
     });
 }
 
+builder.Services.AddHttpContextAccessor();
 // Middlewares
 app.UseGlobalExceptionHandler();
 
@@ -106,6 +152,7 @@ app.UseHttpMetrics();
 app.UseMetricServer();
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseEndpoints(endpoints =>
@@ -114,6 +161,6 @@ app.UseEndpoints(endpoints =>
     endpoints.MapMetrics();
     endpoints.MapHealthChecks("/health");
 });
-
-app.MapGet("/", () => Results.Ok(new { status = "API en funcionamiento", version = "1.0" }));
+app.MapControllers();
+app.MapGet("/", () => Results.Redirect("/scalar"));
 app.Run();
