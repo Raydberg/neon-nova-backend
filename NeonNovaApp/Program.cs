@@ -72,6 +72,7 @@ builder.Services.AddAuthorization(opt =>
 
 // Register Services
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 /**
  * Transient ya que no necesitamos compartir el estado
  */
@@ -79,6 +80,7 @@ builder.Services.AddTransient<ICurrentUserService, CurrentUserService>();
 
 // Register Repositories
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 
 // Configurar automapper en nuestra aplicacion
 builder.Services.AddAutoMapper(
