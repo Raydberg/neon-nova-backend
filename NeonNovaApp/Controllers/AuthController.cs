@@ -2,8 +2,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Application.DTOs.AuthDTOs;
+using Application.Interfaces;
 using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -18,15 +21,18 @@ namespace NeonNovaApp.Controllers
     {
         private readonly UserManager<Users> _userManager;
         private readonly SignInManager<Users> _signInManager;
+        private readonly ICurrentUserService _userService;
 
         public AuthController(UserManager<Users> userManager,
-            SignInManager<Users> signInManager)
+            SignInManager<Users> signInManager, ICurrentUserService userService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _userService = userService;
         }
- 
+
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<ActionResult<AuthenticationResponseDto>> Register(CredentialsUserDto dto)
         {
             var user = new Users
@@ -61,7 +67,9 @@ namespace NeonNovaApp.Controllers
             }
         }
 
+        [HttpPost]
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<ActionResult<AuthenticationResponseDto>> Login(LoginRequestDto dto)
         {
             var user = await _userManager.FindByEmailAsync(dto.Email);
@@ -81,6 +89,40 @@ namespace NeonNovaApp.Controllers
         {
             ModelState.AddModelError(string.Empty, "Login Incorrecto");
             return ValidationProblem();
+        }
+
+        [HttpGet("removate-token")]
+        public async Task<ActionResult<AuthenticationResponseDto>> RenovateToken()
+        {
+            var user = await _userService.GetUser();
+            if (user is null) return NotFound();
+            var credentialUserDto = new LoginRequestDto
+            {
+                Email = user.Email!,
+                Password = user.PasswordHash
+            };
+            var responseAuthentication = await CreateToken(credentialUserDto!);
+            return responseAuthentication;
+        }
+
+        [HttpPost("set-admin")]
+        // [Authorize(Policy = "isAdmin")]
+        public async Task<ActionResult> SetAdmin(EditClaimDto dto)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+            if (user is null) return NotFound();
+            await _userManager.AddClaimAsync(user, new Claim("isAdmin", "true"));
+            return NoContent();
+        }
+
+        [HttpPost("remove-admin")]
+        [Authorize(Policy = "isAdmin")]
+        public async Task<ActionResult> RemoveAdmin(EditClaimDto dto)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+            if (user is null) return NotFound();
+            await _userManager.RemoveClaimAsync(user, new Claim("isAdmin", "true"));
+            return NoContent();
         }
 
         private async Task<AuthenticationResponseDto> CreateToken(LoginRequestDto dto)

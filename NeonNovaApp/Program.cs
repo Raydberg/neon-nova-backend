@@ -56,6 +56,12 @@ builder.Services.AddAuthentication().AddJwtBearer(opt =>
     };
 });
 
+builder.Services.AddAuthorization(opt =>
+{
+    opt.AddPolicy("isAdmin", politica => politica.RequireClaim("isAdmin"));
+    opt.AddPolicy("isUser", politica => politica.RequireClaim("isUser"));
+    opt.AddPolicy("isInvited", politica => politica.RequireClaim("isInvited"));
+});
 
 // Register Services
 builder.Services.AddScoped<IProductService, ProductService>();
@@ -70,8 +76,8 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 // Configurar automapper en nuestra aplicacion
 builder.Services.AddAutoMapper(
     Assembly.GetExecutingAssembly(),
-    typeof(Application.Mappings.MappingProduct).Assembly
-    // typeof(OtherNamespace.OtherMapping).Assembly
+    typeof(Application.Mappings.MappingProduct).Assembly,
+    typeof(Application.Mappings.MappingUser).Assembly
 );
 
 builder.Services.AddControllers();
