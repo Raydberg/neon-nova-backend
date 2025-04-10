@@ -26,6 +26,13 @@ Env.Load();
 var connectionString = Environment.GetEnvironmentVariable("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
 
+var originsPermits = builder.Configuration.GetSection("origenesPermitidos").Get<string[]>()!;
+
+builder.Services.AddCors(opt =>
+{
+    opt.AddDefaultPolicy(optCors => { optCors.WithOrigins(originsPermits).AllowAnyMethod().AllowAnyHeader(); });
+});
+
 //Configuracion de Identity
 var KeyJwt = Environment.GetEnvironmentVariable("key_jwt");
 builder.Services.AddIdentityCore<Users>(opt =>
@@ -151,7 +158,7 @@ if (app.Environment.IsDevelopment())
 builder.Services.AddHttpContextAccessor();
 // Middlewares
 app.UseGlobalExceptionHandler();
-
+app.UseCors();
 // Agregar métricas de Prometheus
 app.UseRouting();
 app.UseHttpMetrics();
