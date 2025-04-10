@@ -14,5 +14,5 @@ public class Role
     public string Description { get; set; }
 
     // Un rol puede tener muchos usuarios.
-    public ICollection<User> Users { get; set; } = new List<User>();
+    public ICollection<Users> Users { get; set; } = new List<Users>();
 }

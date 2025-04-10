@@ -24,5 +24,5 @@ public class ProductComment
 
     // Propiedades de navegación.
     public Product Product { get; set; }
-    public User User { get; set; }
+    public Users Users { get; set; }
 }

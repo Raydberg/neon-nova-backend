@@ -1,84 +1,60 @@
-using Application.Interfaces;
-using Application.Mappings;
-using Application.Services;
-using Domain.Interfaces;
-using Intrastructure.Data;
-using Intrastructure.Repositories;
-using Microsoft.EntityFrameworkCore;
-using NeonNovaApp.Middleware;
-using Scalar.AspNetCore;
-using System.Reflection;
 using DotNetEnv;
-using Prometheus;
+using Intrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using NeonNovaApp.Extensions;
+using NeonNovaApp.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Cargar variables de entorno desde el archivo .env
+// Cargar variables de entorno
 Env.Load();
 
-// Add services to the container.
+// Configuración de base de datos
 var connectionString = Environment.GetEnvironmentVariable("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<ApplicationDbContext>(options => 
+    options.UseSqlServer(connectionString));
 
-// Register Services
-builder.Services.AddScoped<IProductService, ProductService>();
-
-// Register Repositories
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-
-// Configurar automapper en nuestra aplicacion
-builder.Services.AddAutoMapper(
-    Assembly.GetExecutingAssembly(),
-    typeof(Application.Mappings.MappingProduct).Assembly
-    // typeof(OtherNamespace.OtherMapping).Assembly
-);
-
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApi(options =>
+// CORS
+var originsPermits = builder.Configuration.GetSection("origenesPermitidos").Get<string[]>()!;
+builder.Services.AddCors(opt =>
 {
-    // Configuración de OpenAPI
+    opt.AddDefaultPolicy(optCors => { 
+        optCors.WithOrigins(originsPermits).AllowAnyMethod().AllowAnyHeader(); 
+    });
 });
 
-// Agregar health checks y métricas de Prometheus
-builder.Services.AddHealthChecks()
-    .ForwardToPrometheus();
+// Autenticación y autorización
+builder.Services.AddAuthenticationConfiguration();
+
+// Servicios de aplicación
+builder.Services.AddApplicationServices();
+builder.Services.AddMappingConfiguration();
+
+// Documentación
+builder.Services.AddDocumentationServices();
+
+// Monitoreo
+builder.Services.AddMonitoringServices();
+
+builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-
-    app.MapScalarApiReference(options =>
-    {
-        options
-        .WithTitle("NeonNovaApi")
-        .WithTheme(ScalarTheme.Mars)
-        .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
-        .WithPreferredScheme("Api Scheme");
-    });
-}
-
 // Middlewares
+
+app.UseCors();
+
+// Configuración de documentación
+app.UseDocumentationMiddleware();
+
+// Monitoreo
 app.UseGlobalExceptionHandler();
-
-// Agregar métricas de Prometheus
-app.UseRouting();
-app.UseHttpMetrics(); 
-app.UseMetricServer(); 
-
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllers();
-    endpoints.MapMetrics();
-    endpoints.MapHealthChecks("/health");
-});
-
-app.MapGet("/", () => Results.Ok(new { status = "API en funcionamiento", version = "1.0" }));
+app.UseMonitoringMiddleware();
+app.MapControllers();
+app.MapGet("/", () => Results.Redirect("/scalar"));
 app.Run();
