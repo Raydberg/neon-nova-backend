@@ -39,6 +39,8 @@ namespace Application.Services
             };
 
             var result = await _authRepository.CreateUserAsync(user, dto.Password!);
+            await _authRepository.AddClaimAsync(user, new Claim("isUser", "true"));
+            // await _authRepository.AddRoleAsync(user, "USER");
             if (result.Succeeded)
             {
                 var loginDto = new LoginRequestDto
@@ -50,7 +52,7 @@ namespace Application.Services
             }
             else
             {
-                // Aquí puedes manejar la validación según tus necesidades
+                
                 throw new Exception("Error al registrar el usuario");
             }
         }
@@ -79,9 +81,7 @@ namespace Application.Services
             var loginDto = new LoginRequestDto
             {
                 Email = user.Email!,
-                // Nota: Generalmente, no se usa el PasswordHash para renovar tokens.
-                // Aquí se asume que se utiliza el flujo adecuado para renovar.
-                Password = string.Empty 
+                Password = string.Empty
             };
 
             return await CreateToken(loginDto);

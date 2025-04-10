@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Domain.Entities;
 using Intrastructure.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
@@ -25,7 +26,12 @@ public static class AuthenticationExtensions
         services.AddScoped<SignInManager<Users>>();
         services.AddHttpContextAccessor();
 
-        services.AddAuthentication().AddJwtBearer(opt =>
+        services.AddAuthentication(opt =>
+        {
+            opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            opt.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(opt =>
         {
             opt.MapInboundClaims = false;
             opt.TokenValidationParameters = new TokenValidationParameters
@@ -43,7 +49,6 @@ public static class AuthenticationExtensions
         {
             opt.AddPolicy("isAdmin", politica => politica.RequireClaim("isAdmin"));
             opt.AddPolicy("isUser", politica => politica.RequireClaim("isUser"));
-            opt.AddPolicy("isInvited", politica => politica.RequireClaim("isInvited"));
         });
 
         return services;

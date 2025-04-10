@@ -42,19 +42,19 @@ builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
 
 // Middlewares
-app.UseGlobalExceptionHandler();
+
 app.UseCors();
 
 // Configuración de documentación
 app.UseDocumentationMiddleware();
 
 // Monitoreo
-app.UseMonitoringMiddleware();
-
+app.UseGlobalExceptionHandler();
 app.UseHttpsRedirection();
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseMonitoringMiddleware();
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/scalar"));
 app.Run();

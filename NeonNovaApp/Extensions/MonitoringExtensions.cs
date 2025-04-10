@@ -12,15 +12,16 @@ public static class MonitoringExtensions
 
     public static void UseMonitoringMiddleware(this WebApplication app)
     {
-        app.UseRouting();
+        // app.UseRouting();
         app.UseHttpMetrics();
         app.UseMetricServer();
-
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapControllers();
-            endpoints.MapMetrics();
-            endpoints.MapHealthChecks("/health");
-        });
+        app.MapMetrics();
+        app.MapHealthChecks("/health");
+        // app.UseEndpoints(endpoints =>
+        // {
+        //     endpoints.MapControllers();
+        //     endpoints.MapMetrics();
+        //     endpoints.MapHealthChecks("/health");
+        // });
     }
 }

@@ -23,7 +23,7 @@ namespace NeonNovaApp.Controllers
         private readonly IMapper _mapper;
 
         public UserController(ICurrentUserService currentUserService, UserManager<Users> userManager,
-            ApplicationDbContext context,IMapper mapper)
+            ApplicationDbContext context, IMapper mapper)
         {
             _currentUserService = currentUserService;
             _userManager = userManager;
@@ -41,6 +41,7 @@ namespace NeonNovaApp.Controllers
         }
 
         [HttpGet("current")]
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthenticationResponseDto))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -48,10 +49,24 @@ namespace NeonNovaApp.Controllers
         {
             var user = await _currentUserService.GetUser();
             if (user is null) return NotFound();
+
+            var claims = await _userManager.GetClaimsAsync(user);
+            // var roles = await _userManager.GetRolesAsync(user);
+            var isAdmin = claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
+            var isUser = claims.Any(c => c.Type == "isUser" && c.Value == "true");
             return Ok(new
             {
                 id = user.Id,
                 email = user.Email,
+                name = $"{user.FirstName} {user.LastName}",
+                firstName = user.FirstName ?? string.Empty,
+                lastName = user.LastName ?? string.Empty,
+                phone = user.PhoneNumber,
+                permition = new
+                {
+                    ADMIN = isAdmin,
+                    USER = isUser
+                }
             });
         }
 
@@ -60,7 +75,7 @@ namespace NeonNovaApp.Controllers
         {
             var user = await GetCurrentUser();
             if (user is null) return NotFound();
-            // user.E
+            // user.
             // _userManager.UpdateAsync(user);
             return NoContent();
         }

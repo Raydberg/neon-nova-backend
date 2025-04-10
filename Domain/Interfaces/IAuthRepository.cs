@@ -12,4 +12,5 @@ public interface IAuthRepository
     Task<IList<Claim>> GetUserClaimsAsync(Users user);
     Task AddClaimAsync(Users user, Claim claim);
     Task RemoveClaimAsync(Users user, Claim claim);
+    Task AddRoleAsync(Users users, string role);
 }

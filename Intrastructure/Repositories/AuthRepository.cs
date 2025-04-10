@@ -45,5 +45,10 @@ namespace Intrastructure.Repositories
         {
             await _userManager.RemoveClaimAsync(user, claim);
         }
+
+        public async Task AddRoleAsync(Users users, string role)
+        {
+            await _userManager.AddToRoleAsync(users, role);
+        }
     }
 }
