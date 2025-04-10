@@ -15,10 +15,12 @@ public static class ApplicationServicesExtensions
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddTransient<ICurrentUserService, CurrentUserService>();
+        services.AddTransient<ICategoryService, CategoryService>();
 
         // Registrar Repositorios
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IAuthRepository, AuthRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
 
         return services;
     }
@@ -29,7 +31,8 @@ public static class ApplicationServicesExtensions
         services.AddAutoMapper(
             Assembly.GetExecutingAssembly(),
             typeof(Application.Mappings.MappingProduct).Assembly,
-            typeof(Application.Mappings.MappingUser).Assembly
+            typeof(Application.Mappings.MappingUser).Assembly,
+            typeof(Application.Mappings.MappingCategory).Assembly
         );
 
         return services;
