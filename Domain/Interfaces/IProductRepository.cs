@@ -9,5 +9,7 @@ namespace Domain.Interfaces
         Task<Product> CreateAsync(Product product);
         Task UpdateAsync(Product product);
         Task DeletedAsync(int id);
+        Task<Product> GetByIdWithCategoryAsync(int id);
+        Task<IEnumerable<Product>> GetAllWithCategoriesAsync();
     }
 }

@@ -22,8 +22,8 @@ namespace Application.DTOs.ProductsDTOs
         [Required(ErrorMessage = "El stock del producto es obligatorio.")]
         public int Stock { get; set; }
 
-        // [Required(ErrorMessage = "La categoría del producto es obligatoria.")]
-        public int? CategoryId { get; set; }
+        [Required(ErrorMessage = "La categoría del producto es obligatoria.")]
+        public int CategoryId { get; set; }
 
         public ProductStatus Status { get; set; }
         

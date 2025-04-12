@@ -7,6 +7,9 @@ namespace Application.DTOs.ProductsDTOs
         IFormFile? Image,
         string? Name,
         decimal? Price,
+        string? Description,
+        int? Stock,
+        int? CategoryId,
         ProductStatus? Status
     );
 }

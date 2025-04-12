@@ -1,4 +1,5 @@
-﻿using Application.DTOs.ProductsDTOs;
+﻿using Application.DTOs.CategoryDTOs;
+using Application.DTOs.ProductsDTOs;
 using AutoMapper;
 using Domain.Entities;
 
@@ -18,5 +19,6 @@ public class MappingProduct : Profile
             ;
 
         CreateMap<ProductImage, ProductImageDTO>();
+        CreateMap<Category, CategoryDto>();
     }
 }

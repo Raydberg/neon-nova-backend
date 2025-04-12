@@ -59,6 +59,20 @@ public class ProductController : ControllerBase
         return Ok();
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromForm] UpdateProductRequestDTO dto)
+    {
+        try
+        {
+            var updateProduct = await _productService.UpdateAsync(id, dto);
+            return Ok(updateProduct);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
     [HttpDelete("{productId}/images/{imageId}")]
     public async Task<IActionResult> DeleteImage(int productId, int imageId)
     {

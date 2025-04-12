@@ -1,4 +1,5 @@
-﻿using Application.DTOs.ProductsDTOs;
+﻿using Application.DTOs.CategoryDTOs;
+using Application.DTOs.ProductsDTOs;
 using Application.Interfaces;
 using AutoMapper;
 using Domain.Entities;
@@ -7,7 +8,6 @@ using Microsoft.AspNetCore.Http;
 
 namespace Application.Services;
 
-
 public class ProductService : IProductService
 {
     private readonly IProductRepository _repository;
@@ -15,26 +15,41 @@ public class ProductService : IProductService
     private readonly ICloudinaryService _cloudinary;
     private readonly IMapper _mapper;
     private readonly IProductImageService _productImageService;
+    private readonly ICategoryRepository _categoryRepository;
 
-    public ProductService(IProductRepository repository,IProductImageRepository imageRepository ,ICloudinaryService cloudinary, IMapper mapper,
-        IProductImageService productImageService)
+    public ProductService(IProductRepository repository, IProductImageRepository imageRepository,
+        ICloudinaryService cloudinary, IMapper mapper,
+        IProductImageService productImageService, ICategoryRepository categoryRepository)
     {
         _repository = repository;
         _imageRepository = imageRepository;
         _cloudinary = cloudinary;
         _mapper = mapper;
         _productImageService = productImageService;
+        _categoryRepository = categoryRepository;
     }
 
 
     public async Task<List<ProductResponseDTO>> GetAllAsync()
     {
-        var products = await _repository.GetAllAsync();
+        var products = await _repository.GetAllWithCategoriesAsync();
         var productDTOs = new List<ProductResponseDTO>();
-    
+
         foreach (var product in products)
         {
-            var dto = _mapper.Map<ProductResponseDTO>(product);
+            var dto = new ProductResponseDTO
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                Stock = product.Stock,
+                Status = product.Status,
+                CreatedAt = product.CreatedAt,
+                Category = _mapper.Map<CategoryDto>(product.Category),
+                Images = new List<ProductImageDTO>()
+            };
+
             var images = await _productImageService.GetImagesProductIdAsync(product.Id);
             dto.Images = _mapper.Map<List<ProductImageDTO>>(images);
             productDTOs.Add(dto);
@@ -45,18 +60,22 @@ public class ProductService : IProductService
 
     public async Task<ProductResponseDTO> CreateAsync(CreateProductRequestDTO dto)
     {
+        var category = await _categoryRepository.GetByIdAsync(dto.CategoryId);
+        if (category is null) throw new KeyNotFoundException($"La categoria con ID {dto.CategoryId} no existe");
         // Crea una versión del DTO sin la propiedad Images
         var productToCreate = new Product
         {
             Name = dto.Name,
             Description = dto.Description,
             Price = dto.Price,
+            Stock = dto.Stock,
             Status = dto.Status,
+            CategoryId = dto.CategoryId,
             CreatedAt = DateTime.UtcNow
         };
 
         await _repository.CreateAsync(productToCreate);
-    
+
         // Subir imágenes a Cloudinary
         if (dto.Images != null)
         {
@@ -71,20 +90,24 @@ public class ProductService : IProductService
 
     public async Task<ProductResponseDTO> GetByIdWithImagesAsync(int id)
     {
-        var product = await _repository.GetByIdAsync(id);
+        var product = await _repository.GetByIdWithCategoryAsync(id);
         if (product is null)
         {
             throw new KeyNotFoundException("Producto no encontrado");
         }
+
         var images = await _productImageService.GetImagesProductIdAsync(id);
-    
+
         return new ProductResponseDTO
         {
             Id = product.Id,
             Name = product.Name,
+            Description = product.Description,
             Price = product.Price,
+            Stock = product.Stock,
             Status = product.Status,
-            // CreatedAt = product.CreatedAt,
+            Category = _mapper.Map<CategoryDto>(product.Category),
+            CreatedAt = product.CreatedAt,
             Images = _mapper.Map<List<ProductImageDTO>>(images)
         };
     }
@@ -96,7 +119,14 @@ public class ProductService : IProductService
         if (dto.Name != null) product.Name = dto.Name;
         if (dto.Price != null) product.Price = dto.Price.Value;
         if (dto.Status != null) product.Status = dto.Status.Value;
-
+        if (dto.Stock != null) product.Stock = dto.Stock.Value;
+        if (dto.Description != null) product.Description = dto.Description;
+        if (dto.CategoryId != null && dto.CategoryId != product.CategoryId)
+        {
+            var category = await _categoryRepository.GetByIdAsync(dto.CategoryId.Value);
+            if (category is null) throw new KeyNotFoundException($"La categoria con ID {dto.CategoryId} no existe");
+            product.CategoryId = dto.CategoryId.Value;
+        }
         await _repository.UpdateAsync(product);
         // Actualizar Imagen
         if (dto.Image != null)
@@ -130,7 +160,7 @@ public class ProductService : IProductService
     public async Task<ProductImageDTO> UpdateImageAsync(int productId, int imageId, IFormFile image)
     {
         var existingImage = await _imageRepository.GetByIdAsync(imageId);
-    
+
         if (existingImage == null || existingImage.ProductId != productId)
             throw new KeyNotFoundException("Imagen no encontrada o no pertenece al producto indicado");
 

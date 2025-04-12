@@ -1,51 +1,69 @@
 ﻿using Domain.Entities;
-using Domain.Interfaces;
 using Intrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace Intrastructure.Repositories;
+namespace Domain.Interfaces;
 
-public class ProductImageRepository : IProductImageRepository
+public class ProductRepository : IProductRepository
 {
     private readonly ApplicationDbContext _context;
 
-    public ProductImageRepository(ApplicationDbContext context)
+    public ProductRepository(ApplicationDbContext context)
     {
         _context = context;
     }
 
-    public async Task<ProductImage> GetByIdAsync(int id)
+    public async Task<Product> GetByIdAsync(int id)
     {
-        return await _context.ProductImages.FindAsync(id);
+        return await _context.Products.FindAsync(id);
     }
 
-    public async Task AddAsync(ProductImage image)
+    public async Task<IEnumerable<Product>> GetAllAsync()
     {
-        _context.ProductImages.Add(image);
+        return await _context.Products.ToListAsync();
+    }
+
+    public async Task<Product> CreateAsync(Product product)
+    {
+        _context.Products.Add(product);
+        await _context.SaveChangesAsync();
+        return product;
+    }
+
+    public async Task UpdateAsync(Product product)
+    {
+        _context.Products.Attach(product);
+        var entry = _context.Entry(product);
+        entry.Property(p => p.Name).IsModified = true;
+        entry.Property(p => p.Description).IsModified = true;
+        entry.Property(p => p.Price).IsModified = true;
+        entry.Property(p => p.Stock).IsModified = true;
+        entry.Property(p => p.CategoryId).IsModified = true;
+        entry.Property(p => p.Status).IsModified = true;
         await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(ProductImage image)
+    public async Task DeletedAsync(int id)
     {
-        _context.ProductImages.Remove(image);
-        await _context.SaveChangesAsync();
+        var product = await GetByIdAsync(id);
+        if (product != null)
+        {
+            _context.Products.Remove(product);
+            await _context.SaveChangesAsync();
+        }
     }
 
-    public async Task<List<ProductImage>> GetAllByProductIdAsync(int productId)
+    public async Task<Product> GetByIdWithCategoryAsync(int id)
     {
-        return await _context.ProductImages
-            .Where(pi => pi.ProductId == productId)
+        return await _context.Products
+            .Include(p => p.Category)
+            .FirstOrDefaultAsync(p => p.Id == id);
+    }
+
+    public async Task<IEnumerable<Product>> GetAllWithCategoriesAsync()
+    {
+        return await _context.Products
+            .Include(p => p.Category)
             .ToListAsync();
-    }
-
-    public IQueryable<ProductImage> GetAllByProductId(int productId)
-    {
-        return _context.ProductImages.Where(pi => pi.ProductId == productId);
-    }
-
-    public async Task UpdateAsync(ProductImage image)
-    {
-        _context.ProductImages.Update(image);
-        await _context.SaveChangesAsync();
     }
 }
