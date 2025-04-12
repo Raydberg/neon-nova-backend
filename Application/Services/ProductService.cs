@@ -1,39 +1,179 @@
-﻿using Application.DTOs.ProductsDTOs;
+﻿using Application.DTOs.CategoryDTOs;
+using Application.DTOs.ProductsDTOs;
 using Application.Interfaces;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
 
-namespace Application.Services
+namespace Application.Services;
+
+public class ProductService : IProductService
 {
-    public class ProductService : IProductService
+    private readonly IProductRepository _repository;
+    private readonly IProductImageRepository _imageRepository;
+    private readonly ICloudinaryService _cloudinary;
+    private readonly IMapper _mapper;
+    private readonly IProductImageService _productImageService;
+    private readonly ICategoryRepository _categoryRepository;
+
+    public ProductService(IProductRepository repository, IProductImageRepository imageRepository,
+        ICloudinaryService cloudinary, IMapper mapper,
+        IProductImageService productImageService, ICategoryRepository categoryRepository)
     {
-        private readonly IProductRepository _repository;
-        private readonly IMapper _mapper;
-        public ProductService (IProductRepository productRepository, IMapper mapper)
-        {
-            _repository = productRepository;
-            _mapper = mapper;
+        _repository = repository;
+        _imageRepository = imageRepository;
+        _cloudinary = cloudinary;
+        _mapper = mapper;
+        _productImageService = productImageService;
+        _categoryRepository = categoryRepository;
+    }
 
+
+    public async Task<List<ProductResponseDTO>> GetAllAsync()
+    {
+        var products = await _repository.GetAllWithCategoriesAsync();
+        var productDTOs = new List<ProductResponseDTO>();
+
+        foreach (var product in products)
+        {
+            var dto = new ProductResponseDTO
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                Stock = product.Stock,
+                Status = product.Status,
+                CreatedAt = product.CreatedAt,
+                Category = _mapper.Map<CategoryDto>(product.Category),
+                Images = new List<ProductImageDTO>()
+            };
+
+            var images = await _productImageService.GetImagesProductIdAsync(product.Id);
+            dto.Images = _mapper.Map<List<ProductImageDTO>>(images);
+            productDTOs.Add(dto);
         }
 
-        public async Task AddAsync (CreateProductDto product)
+        return productDTOs;
+    }
+
+    public async Task<ProductResponseDTO> CreateAsync(CreateProductRequestDTO dto)
+    {
+        var category = await _categoryRepository.GetByIdAsync(dto.CategoryId);
+        if (category is null) throw new KeyNotFoundException($"La categoria con ID {dto.CategoryId} no existe");
+        // Crea una versión del DTO sin la propiedad Images
+        var productToCreate = new Product
         {
-            await _repository.AddAsync(_mapper.Map<Product>(product));
+            Name = dto.Name,
+            Description = dto.Description,
+            Price = dto.Price,
+            Stock = dto.Stock,
+            Status = dto.Status,
+            CategoryId = dto.CategoryId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _repository.CreateAsync(productToCreate);
+
+        // Subir imágenes a Cloudinary
+        if (dto.Images != null)
+        {
+            foreach (var image in dto.Images)
+            {
+                await _productImageService.AddImageAsync(productToCreate.Id, image);
+            }
         }
 
-        public async Task DeleteAsync (int id)
+        return await GetByIdWithImagesAsync(productToCreate.Id);
+    }
+
+    public async Task<ProductResponseDTO> GetByIdWithImagesAsync(int id)
+    {
+        var product = await _repository.GetByIdWithCategoryAsync(id);
+        if (product is null)
         {
-            await _repository.DeleteAsync(id);
+            throw new KeyNotFoundException("Producto no encontrado");
         }
 
-        public async Task<List<ProductDto>> GetAllAsync () => _mapper.Map<List<ProductDto>>(await _repository.GetAllAsync());
+        var images = await _productImageService.GetImagesProductIdAsync(id);
 
-        public async Task<ProductDto> GetByIdAsync (int id) => _mapper.Map<ProductDto>(await _repository.GetAsync(id));
-
-        public async Task UpdateAsync (UpdateProductDto product)
+        return new ProductResponseDTO
         {
-           await _repository.UpdateAsync(_mapper.Map<Product>(product));
+            Id = product.Id,
+            Name = product.Name,
+            Description = product.Description,
+            Price = product.Price,
+            Stock = product.Stock,
+            Status = product.Status,
+            Category = _mapper.Map<CategoryDto>(product.Category),
+            CreatedAt = product.CreatedAt,
+            Images = _mapper.Map<List<ProductImageDTO>>(images)
+        };
+    }
+
+    public async Task<ProductResponseDTO> UpdateAsync(int id, UpdateProductRequestDTO dto)
+    {
+        var product = await _repository.GetByIdAsync(id);
+        if (product is null) throw new KeyNotFoundException();
+        if (dto.Name != null) product.Name = dto.Name;
+        if (dto.Price != null) product.Price = dto.Price.Value;
+        if (dto.Status != null) product.Status = dto.Status.Value;
+        if (dto.Stock != null) product.Stock = dto.Stock.Value;
+        if (dto.Description != null) product.Description = dto.Description;
+        if (dto.CategoryId != null && dto.CategoryId != product.CategoryId)
+        {
+            var category = await _categoryRepository.GetByIdAsync(dto.CategoryId.Value);
+            if (category is null) throw new KeyNotFoundException($"La categoria con ID {dto.CategoryId} no existe");
+            product.CategoryId = dto.CategoryId.Value;
         }
+        await _repository.UpdateAsync(product);
+        // Actualizar Imagen
+        if (dto.Image != null)
+        {
+            var oldImage = await _productImageService.GetPrimaryImageAsync(id);
+            if (oldImage != null)
+            {
+                await _productImageService.DeleteImageAsync(oldImage.Id);
+            }
+
+            //Subir la nueva imagen
+            await _productImageService.AddImageAsync(id, dto.Image);
+        }
+
+        return await GetByIdWithImagesAsync(id);
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var product = await _repository.GetByIdAsync(id);
+        if (product is null) throw new KeyNotFoundException();
+        var images = await _productImageService.GetImagesProductIdAsync(id);
+        foreach (var image in images)
+        {
+            await _productImageService.DeleteImageAsync(image.Id);
+        }
+
+        await _repository.DeletedAsync(id);
+    }
+
+    public async Task<ProductImageDTO> UpdateImageAsync(int productId, int imageId, IFormFile image)
+    {
+        var existingImage = await _imageRepository.GetByIdAsync(imageId);
+
+        if (existingImage == null || existingImage.ProductId != productId)
+            throw new KeyNotFoundException("Imagen no encontrada o no pertenece al producto indicado");
+
+        await _cloudinary.DeleteImage(existingImage.PublicId);
+
+        var imageUrl = await _cloudinary.UploadImage(image);
+        var publicId = _cloudinary.GetPublicIdFromUrl(imageUrl);
+
+        existingImage.ImageUrl = imageUrl;
+        existingImage.PublicId = publicId;
+
+        await _imageRepository.UpdateAsync(existingImage);
+
+        return _mapper.Map<ProductImageDTO>(existingImage);
     }
 }

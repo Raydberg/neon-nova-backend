@@ -4,11 +4,12 @@ namespace Domain.Interfaces
 {
     public interface IProductRepository
     {
-        Task<List<Product>> GetAllAsync ();
-        Task<Product> GetAsync (int id);
-        Task DeleteAsync (int id);
-        Task AddAsync (Product product);
-        Task UpdateAsync (Product product);
-
+        Task<Product> GetByIdAsync(int id);
+        Task<IEnumerable<Product>> GetAllAsync();
+        Task<Product> CreateAsync(Product product);
+        Task UpdateAsync(Product product);
+        Task DeletedAsync(int id);
+        Task<Product> GetByIdWithCategoryAsync(int id);
+        Task<IEnumerable<Product>> GetAllWithCategoriesAsync();
     }
 }

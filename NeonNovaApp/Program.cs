@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using DotNetEnv;
 using Intrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -11,16 +12,14 @@ Env.Load();
 
 // Configuración de base de datos
 var connectionString = Environment.GetEnvironmentVariable("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(options => 
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // CORS
 var originsPermits = builder.Configuration.GetSection("origenesPermitidos").Get<string[]>()!;
 builder.Services.AddCors(opt =>
 {
-    opt.AddDefaultPolicy(optCors => { 
-        optCors.WithOrigins(originsPermits).AllowAnyMethod().AllowAnyHeader(); 
-    });
+    opt.AddDefaultPolicy(optCors => { optCors.WithOrigins(originsPermits).AllowAnyMethod().AllowAnyHeader(); });
 });
 
 // Autenticación y autorización
@@ -36,7 +35,14 @@ builder.Services.AddDocumentationServices();
 // Monitoreo
 builder.Services.AddMonitoringServices();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    //Manehar referencias circulares => ignorar cilcos
+    .AddJsonOptions(opt =>
+    {
+        opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        opt.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    })
+    ;
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();

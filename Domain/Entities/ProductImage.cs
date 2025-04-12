@@ -13,8 +13,8 @@ public class ProductImage
     [MaxLength(500, ErrorMessage = "La URL de la imagen no debe superar los 500 caracteres.")]
     public string ImageUrl { get; set; }
 
-    [MaxLength(500, ErrorMessage = "El texto alternativo no debe superar los 500 caracteres.")]
-    public string AltText { get; set; }
+    public DateTime CreateAt { get; set; }
+    
     //Requerido para cloudinary
     public string PublicId { get; set; }
 

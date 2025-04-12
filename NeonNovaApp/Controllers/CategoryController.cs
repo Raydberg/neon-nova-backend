@@ -51,12 +51,35 @@ namespace NeonNovaApp.Controllers
             await _categoryService.DeleteCategoryAsync(id);
             return NoContent();
         }
-
         [HttpGet("{id}/products")]
-        public async Task<ActionResult<List<ProductDto>>> GetProducts(int id)
+        public async Task<ActionResult<List<ProductResponseDTO>>> GetProductsByCategory(int id)
         {
-            var products = await _categoryService.GetProductsByCategoryAsync(id);
-            return Ok(products);
+            try
+            {
+                var products = await _categoryService.GetProductsByCategoryAsync(id);
+                return Ok(products);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error al obtener productos por categoría: {ex.Message}");
+            }
+        }
+        [HttpGet("{id}/products-with-first-image")]
+        public async Task<ActionResult<List<ProductWithFirstImageDTO>>> GetProductsWithFirstImage(int id)
+        {
+            try
+            {
+                var products = await _categoryService.GetProductsByCategoryWithFirstImageAsync(id);
+                return Ok(products);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }
