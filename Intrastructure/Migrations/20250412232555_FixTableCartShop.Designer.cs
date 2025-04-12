@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Intrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250412172417_CreateTables")]
-    partial class CreateTables
+    [Migration("20250412232555_FixTableCartShop")]
+    partial class FixTableCartShop
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -39,8 +39,9 @@ namespace Intrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("UsersId")
                         .HasColumnType("nvarchar(450)");
@@ -508,11 +509,17 @@ namespace Intrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.CartShop", b =>
                 {
-                    b.HasOne("Domain.Entities.Users", "Users")
+                    b.HasOne("Domain.Entities.Users", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Users", null)
                         .WithMany("Carts")
                         .HasForeignKey("UsersId");
 
-                    b.Navigation("Users");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.Entities.CartShopDetail", b =>

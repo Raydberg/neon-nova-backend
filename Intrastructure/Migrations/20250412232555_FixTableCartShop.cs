@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Intrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateTables : Migration
+    public partial class FixTableCartShop : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -114,7 +114,7 @@ namespace Intrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     UsersId = table.Column<string>(type: "nvarchar(450)", nullable: true)
@@ -122,6 +122,12 @@ namespace Intrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_CartShops", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CartShops_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_CartShops_Users_UsersId",
                         column: x => x.UsersId,
