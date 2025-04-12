@@ -53,7 +53,7 @@ namespace NeonNovaApp.Controllers
         }
 
         [HttpGet("{id}/products")]
-        public async Task<ActionResult<List<ProductDto>>> GetProducts(int id)
+        public async Task<ActionResult<List<ProductResponseDTO>>> GetProducts(int id)
         {
             var products = await _categoryService.GetProductsByCategoryAsync(id);
             return Ok(products);

@@ -3,40 +3,49 @@ using Domain.Interfaces;
 using Intrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace Intrastructure.Repositories
+namespace Intrastructure.Repositories;
+
+public class ProductImageRepository : IProductImageRepository
 {
-    public class ProductRepository : IProductRepository
+    private readonly ApplicationDbContext _context;
+
+    public ProductImageRepository(ApplicationDbContext context)
     {
-        private readonly ApplicationDbContext _context;
-        public ProductRepository (ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        _context = context;
+    }
 
-        public async Task AddAsync (Product product)
-        {
-            await _context.Products.AddAsync(product);
-            await _context.SaveChangesAsync();
-        }
+    public async Task<ProductImage> GetByIdAsync(int id)
+    {
+        return await _context.ProductImages.FindAsync(id);
+    }
 
-        public async Task DeleteAsync (int id)
-        {
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
-            if (product != null)
-            {
-                _context.Products.Remove(product);
-                await _context.SaveChangesAsync();
-            }
-        }
+    public async Task AddAsync(ProductImage image)
+    {
+        _context.ProductImages.Add(image);
+        await _context.SaveChangesAsync();
+    }
 
-        public async Task<List<Product>> GetAllAsync () => await _context.Products.ToListAsync();
+    public async Task DeleteAsync(ProductImage image)
+    {
+        _context.ProductImages.Remove(image);
+        await _context.SaveChangesAsync();
+    }
 
-        public async Task<Product> GetAsync (int id) => await _context.Products.FindAsync(id);
+    public async Task<List<ProductImage>> GetAllByProductIdAsync(int productId)
+    {
+        return await _context.ProductImages
+            .Where(pi => pi.ProductId == productId)
+            .ToListAsync();
+    }
 
-        public async Task UpdateAsync (Product product)
-        {
-            _context.Products.Update(product);
-            await _context.SaveChangesAsync();
-        }
+    public IQueryable<ProductImage> GetAllByProductId(int productId)
+    {
+        return _context.ProductImages.Where(pi => pi.ProductId == productId);
+    }
+
+    public async Task UpdateAsync(ProductImage image)
+    {
+        _context.ProductImages.Update(image);
+        await _context.SaveChangesAsync();
     }
 }

@@ -42,7 +42,7 @@ public class CategoryService : ICategoryService
         return _mapper.Map<CategoryDto>(categoryUpdated);
     }
 
-    public async Task<List<ProductDto>> GetProductsByCategoryAsync(int category)
+    public async Task<List<ProductResponseDTO>> GetProductsByCategoryAsync(int category)
     {
         throw new NotImplementedException();
     }

@@ -16,11 +16,16 @@ public static class ApplicationServicesExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddTransient<ICurrentUserService, CurrentUserService>();
         services.AddTransient<ICategoryService, CategoryService>();
+        services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<IProductImageService, ProductImageService>();
+        services.AddScoped<ICloudinaryService, CloudinaryService>();
 
         // Registrar Repositorios
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IProductImageRepository, ProductImageRepository>();
 
         return services;
     }
