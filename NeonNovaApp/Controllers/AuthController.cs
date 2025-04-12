@@ -64,6 +64,7 @@ namespace NeonNovaApp.Controllers
         }
 
         [HttpPost("set-admin")]
+        // [Authorize(Policy = "isAdmin")]
         public async Task<IActionResult> SetAdmin(EditClaimDto dto)
         {
             try

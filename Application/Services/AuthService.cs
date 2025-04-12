@@ -35,7 +35,9 @@ namespace Application.Services
                 UserName = dto.Email,
                 PhoneNumber = dto.Phone,
                 //Mas adelante poner verificaicon de Email
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                LockoutEnabled = false,
+                LockoutEnd = null
             };
 
             var result = await _authRepository.CreateUserAsync(user, dto.Password!);
@@ -52,7 +54,6 @@ namespace Application.Services
             }
             else
             {
-                
                 throw new Exception("Error al registrar el usuario");
             }
         }

@@ -19,6 +19,7 @@ public static class ApplicationServicesExtensions
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IProductImageService, ProductImageService>();
         services.AddScoped<ICloudinaryService, CloudinaryService>();
+        services.AddScoped<IUserService, UserService>();
 
         // Registrar Repositorios
         services.AddScoped<IProductRepository, ProductRepository>();
@@ -26,6 +27,7 @@ public static class ApplicationServicesExtensions
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IProductImageRepository, ProductImageRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
         return services;
     }

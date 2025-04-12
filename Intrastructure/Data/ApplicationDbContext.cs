@@ -41,8 +41,8 @@ namespace Intrastructure.Data
                 .Ignore(u => u.TwoFactorEnabled)
                 // .Ignore(u=> u.NormalizedUserName)
                 // .Ignore(u=> u.ConcurrencyStamp)
-                .Ignore(u=> u.LockoutEnabled)
-                .Ignore(u=> u.LockoutEnd)
+                // .Ignore(u=> u.LockoutEnabled)
+                // .Ignore(u=> u.LockoutEnd)
                 .Ignore(u=> u.AccessFailedCount);
             
             //Cambio de nombres para las tablas de Identity
