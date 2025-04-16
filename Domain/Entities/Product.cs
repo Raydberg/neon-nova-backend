@@ -12,7 +12,8 @@ namespace Domain.Entities
 
         public int Stock { get; set; }
         public int CategoryId { get; set; }
-
+        
+        public int? Punctuation { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public ProductStatus Status { get; set; }

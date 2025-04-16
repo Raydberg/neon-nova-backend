@@ -127,6 +127,7 @@ public class ProductService : IProductService
             if (category is null) throw new KeyNotFoundException($"La categoria con ID {dto.CategoryId} no existe");
             product.CategoryId = dto.CategoryId.Value;
         }
+
         await _repository.UpdateAsync(product);
         // Actualizar Imagen
         if (dto.Image != null)
@@ -175,5 +176,20 @@ public class ProductService : IProductService
         await _imageRepository.UpdateAsync(existingImage);
 
         return _mapper.Map<ProductImageDTO>(existingImage);
+    }
+
+    public async Task<IEnumerable<ProductoSimplificadoDto>> GetProductSimplified()
+    {
+        var simplifiesProducts = await _repository.GetAllProductSimplifiedAsync();
+        return simplifiesProducts.Select(p => new ProductoSimplificadoDto
+        {
+            Id = p.Id,
+            Name = p.Name,
+            Price = p.Price,
+            CategoryId = p.CategoryId,
+            CategoryName = p.CategoryName,
+            Punctuation = p.Punctuation,
+            ImageUrl = p.ImageUrl
+        });
     }
 }

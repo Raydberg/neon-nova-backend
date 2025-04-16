@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Intrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250412232555_FixTableCartShop")]
+    [Migration("20250416001813_FixTableCartShop")]
     partial class FixTableCartShop
     {
         /// <inheritdoc />
@@ -197,6 +197,9 @@ namespace Intrastructure.Migrations
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("Punctuation")
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
