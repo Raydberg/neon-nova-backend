@@ -13,4 +13,5 @@ public interface IProductService
     Task DeleteAsync(int id);
 
     Task<ProductImageDTO> UpdateImageAsync(int productId, int imageId, IFormFile image);
+    Task<IEnumerable<ProductoSimplificadoDto>> GetProductSimplified();
 }

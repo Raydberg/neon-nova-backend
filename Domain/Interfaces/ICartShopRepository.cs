@@ -4,10 +4,9 @@ namespace Domain.Interfaces;
 
 public interface ICartShopRepository
 {
-    Task<CartShop> GetById(int id);
-    Task<IEnumerable<CartShop>> GetAll();
-    Task<CartShop> GetByUser(int userId);
-    Task<CartShop> Add(CartShop entity);
-    Task Update(CartShop entity);
-    Task Delete(int id);
+    Task<CartShop> GetActiveCartByUserIdAsync(string userId);
+    Task<CartShop> CreateCartAsync(CartShop cart);
+    Task<CartShop> UpdateCartAsync(CartShop cart);
+    Task RemoveCartDetailAsync(CartShopDetail detail);
+    Task ClearCartDetailsAsync(int cartId);
 }

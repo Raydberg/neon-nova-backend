@@ -1,4 +1,5 @@
 ﻿using Domain.Entities;
+using Domain.Enums;
 using Intrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -64,6 +65,25 @@ public class ProductRepository : IProductRepository
     {
         return await _context.Products
             .Include(p => p.Category)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<ProductSimplified>> GetAllProductSimplifiedAsync()
+    {
+        return await _context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images)
+            .Where(p => p.Status == ProductStatus.Active)
+            .Select(p => new ProductSimplified
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                CategoryName = p.Category.Name,
+                CategoryId = p.CategoryId,
+                Punctuation = p.Punctuation,
+                ImageUrl = p.Images.OrderBy(i => i.Id).FirstOrDefault()!.ImageUrl
+            })
             .ToListAsync();
     }
 }

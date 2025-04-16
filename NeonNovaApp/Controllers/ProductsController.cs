@@ -37,7 +37,12 @@ public class ProductController : ControllerBase
         return product == null ? NotFound() : Ok(product);
     }
 
-
+    [HttpGet("simplified")]
+    public async Task<IActionResult> GetSimplifiedProducts()
+    {
+        var products = await _productService.GetProductSimplified();
+        return Ok(products);
+    }
     [HttpPut("{productId}/images/{imageId}")]
     public async Task<IActionResult> UpdateImage(int productId, int imageId, [FromForm] UpdateProductImageDTO dto)
     {

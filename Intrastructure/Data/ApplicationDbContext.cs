@@ -75,8 +75,16 @@ namespace Intrastructure.Data
                 ;
 
             // Índice para Cart.UserId.
-            modelBuilder.Entity<CartShop>()
-                .HasIndex(c => c.UserId);
+            modelBuilder.Entity<CartShop>(entity =>
+            {
+                entity.HasIndex(c => c.UserId);
+                entity.Property(c => c.UserId).HasColumnType("nvarchar(450)");
+    
+                entity.HasOne(c => c.User)
+                    .WithMany()
+                    .HasForeignKey(c => c.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
 
             // Índice para OrderDetail.OrderId.
             // modelBuilder.Entity<OrderDetail>()
