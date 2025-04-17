@@ -122,12 +122,18 @@ public class AuthController : ControllerBase
         }
 
         var authResponse = await _authService.LoginWithGoogleAsync(result.Principal);
-        
+
         if (returnUrl.Contains("token") || string.IsNullOrEmpty(returnUrl) || returnUrl == "/")
         {
             return Ok(authResponse);
         }
-        
+
+        if (returnUrl.StartsWith("http://localhost:4200") || 
+            returnUrl.StartsWith("https://neonnova.netlify.app"))
+        {
+            return Redirect($"{returnUrl}?token={authResponse.Token}");
+        }
+
         return Redirect(returnUrl);
     }
 }
