@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Domain.Entities;
 using Intrastructure.Data;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -12,7 +13,8 @@ public static class AuthenticationExtensions
     public static IServiceCollection AddAuthenticationConfiguration(this IServiceCollection services)
     {
         var KeyJwt = Environment.GetEnvironmentVariable("key_jwt");
-
+        var GOOGLE_CLIENT_ID = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
+        var GOOGLE_SECRET_CLIENT = Environment.GetEnvironmentVariable("GOOGLE_SECRET_CLIENT");
         services.AddIdentityCore<Users>(opt =>
             {
                 opt.SignIn.RequireConfirmedEmail = true;
@@ -31,6 +33,20 @@ public static class AuthenticationExtensions
             opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             opt.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddCookie().AddGoogle(opt =>
+        {
+            if (GOOGLE_SECRET_CLIENT is null)
+            {
+                throw new ArgumentException(nameof(GOOGLE_SECRET_CLIENT));
+            }
+            if (GOOGLE_CLIENT_ID is null)
+            {
+                throw new ArgumentException(nameof(GOOGLE_CLIENT_ID));
+            }
+            opt.ClientId = GOOGLE_CLIENT_ID;
+            opt.ClientSecret = GOOGLE_SECRET_CLIENT;
+            opt.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            
         }).AddJwtBearer(opt =>
         {
             opt.MapInboundClaims = false;

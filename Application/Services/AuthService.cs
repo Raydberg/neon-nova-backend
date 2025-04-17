@@ -4,6 +4,7 @@ using System.Text;
 using Application.DTOs.AuthDTOs;
 using Application.Interfaces;
 using Domain.Entities;
+using Domain.Exceptions;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -102,6 +103,54 @@ namespace Application.Services
             if (user is null) throw new Exception("Usuario no encontrado");
 
             await _authRepository.RemoveClaimAsync(user, new Claim("isAdmin", "true"));
+        }
+
+        public async Task<AuthenticationResponseDto> LoginWithGoogleAsync(ClaimsPrincipal claimsPrincipal)
+        {
+            if (claimsPrincipal is null)
+            {
+                throw new ExternalLoginProviderException("Google", "ClaimsPrincipal is null");
+            }
+
+            var email = claimsPrincipal.FindFirstValue(ClaimTypes.Email);
+            if (email is null)
+            {
+                throw new ExternalLoginProviderException("Google", "Email is null");
+            }
+
+            var user = await _authRepository.FindUserByEmailAsync(email);
+            if (user is null)
+            {
+                var firstName = claimsPrincipal.FindFirstValue(ClaimTypes.GivenName) ?? "Usuario";
+                var lastName = claimsPrincipal.FindFirstValue(ClaimTypes.Surname) ?? "Google";
+
+                user = new Users
+                {
+                    Email = email,
+                    UserName = email,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    EmailConfirmed = true,
+                    LockoutEnabled = false
+                };
+
+                var result =
+                    await _authRepository.CreateUserAsync(user, Convert.ToBase64String(Guid.NewGuid().ToByteArray()));
+                if (!result.Succeeded)
+                {
+                    throw new ExternalLoginProviderException("Google", "No se pudo crear el usuario");
+                }
+
+                await _authRepository.AddClaimAsync(user, new Claim("isUser", "true"));
+            }
+
+            var loginDto = new LoginRequestDto
+            {
+                Email = email,
+                Password = string.Empty
+            };
+
+            return await CreateToken(loginDto);
         }
 
         private async Task<AuthenticationResponseDto> CreateToken(LoginRequestDto dto)
