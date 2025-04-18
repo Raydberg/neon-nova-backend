@@ -39,7 +39,12 @@ public class UserService : IUserService
         var isUser = claims.Any(c => c.Type == "isUser" && c.Value == "true");
 
         var pictureClaim = claims.FirstOrDefault(c => c.Type == "picture");
-        var avatarUrl = pictureClaim?.Value;
+        string avatarUrl = null;
+
+        if (!string.IsNullOrEmpty(pictureClaim?.Value))
+        {
+            avatarUrl = $"/api/proxy/image?url={Uri.EscapeDataString(pictureClaim.Value)}";
+        }
 
         var initials =
             $"{user.FirstName?.Substring(0, 1 > user.FirstName?.Length ? user.FirstName?.Length ?? 0 : 1)}{user.LastName?.Substring(0, 1 > user.LastName?.Length ? user.LastName?.Length ?? 0 : 1)}"

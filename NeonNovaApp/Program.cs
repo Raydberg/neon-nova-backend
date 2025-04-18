@@ -26,6 +26,7 @@ builder.Services.AddCors(opt =>
 builder.Services.AddAuthenticationConfiguration();
 
 // Servicios de aplicación
+builder.Services.AddHttpServices();
 builder.Services.AddApplicationServices();
 builder.Services.AddMappingConfiguration();
 
