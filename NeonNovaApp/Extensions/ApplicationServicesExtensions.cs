@@ -24,6 +24,8 @@ public static class ApplicationServicesExtensions
         services.AddScoped<ICloudinaryService, CloudinaryService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ICartShopService, CartShopService>();
+        services.AddScoped<IProductCommentService, ProductCommentService>();
+
 
         // Registrar Repositorios
         services.AddScoped<IProductRepository, ProductRepository>();
@@ -33,6 +35,8 @@ public static class ApplicationServicesExtensions
         services.AddScoped<IProductImageRepository, ProductImageRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICartShopRepository, CartShopRepository>();
+        services.AddScoped<IProductCommentRepository, ProductCommentRepository>();
+        
 
         return services;
     }
@@ -45,7 +49,8 @@ public static class ApplicationServicesExtensions
             typeof(Application.Mappings.MappingProduct).Assembly,
             typeof(Application.Mappings.MappingUser).Assembly,
             typeof(Application.Mappings.MappingCategory).Assembly,
-            typeof(Application.Mappings.MappingCartShop).Assembly
+            typeof(Application.Mappings.MappingCartShop).Assembly,
+            typeof(Application.Mappings.MappingComent).Assembly
         );
 
         return services;
