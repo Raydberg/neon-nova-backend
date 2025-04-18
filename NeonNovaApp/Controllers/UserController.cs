@@ -37,6 +37,24 @@ public class UserController : ControllerBase
         return Ok(user);
     }
 
+    [HttpGet("{userId}")]
+    public async Task<ActionResult<UserDto>> GetUserById(string userId)
+    {
+        try
+        {
+            var user = await _userService.GetUserByIdAsync(userId);
+            return Ok(user);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error al obtener usuario: {ex.Message}");
+        }
+    }
+
     [HttpPut]
     [Authorize]
     public async Task<IActionResult> UpdateUser(UserUpdateDto dto)

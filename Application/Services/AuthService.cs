@@ -16,14 +16,16 @@ namespace Application.Services
         private readonly IAuthRepository _authRepository;
         private readonly SignInManager<Users> _signInManager;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IUserRepository _userRepository;
 
         public AuthService(IAuthRepository authRepository,
             SignInManager<Users> signInManager,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService, IUserRepository userRepository)
         {
             _authRepository = authRepository;
             _signInManager = signInManager;
             _currentUserService = currentUserService;
+            _userRepository = userRepository;
         }
 
         public async Task<AuthenticationResponseDto> Register(CredentialsUserDto dto)
@@ -63,7 +65,8 @@ namespace Application.Services
         {
             var user = await _authRepository.FindUserByEmailAsync(dto.Email);
             if (user is null) throw new Exception("Login Incorrecto");
-
+            user.LastLogin = DateTime.UtcNow;
+            await _userRepository.UpdateUserAsync(user);
             var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password!, false);
             if (result.Succeeded)
             {
@@ -123,7 +126,7 @@ namespace Application.Services
             var pictureUrl = claimsPrincipal.FindFirstValue("picture");
             if (!string.IsNullOrEmpty(pictureUrl))
             {
-                if (user != null) 
+                if (user != null)
                 {
                     await _authRepository.AddClaimAsync(user, new Claim("picture", pictureUrl));
                 }
@@ -141,7 +144,8 @@ namespace Application.Services
                     FirstName = firstName,
                     LastName = lastName,
                     EmailConfirmed = true,
-                    LockoutEnabled = false
+                    LockoutEnabled = false,
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 var result =
@@ -159,6 +163,8 @@ namespace Application.Services
                 }
             }
 
+            user.LastLogin = DateTime.UtcNow;
+            await _userRepository.UpdateUserAsync(user);
             var loginDto = new LoginRequestDto
             {
                 Email = email,
