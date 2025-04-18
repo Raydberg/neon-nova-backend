@@ -9,4 +9,6 @@ public class UserDto
     public string Phone { get; set; }
 
     public required string Email { get; set; }
+    public string? AvatarUrl { get; set; }
+    public string InitialAvatar { get; set; }
 }

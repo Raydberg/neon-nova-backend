@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Domain.Entities;
 using Intrastructure.Data;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -39,14 +40,19 @@ public static class AuthenticationExtensions
             {
                 throw new ArgumentException(nameof(GOOGLE_SECRET_CLIENT));
             }
+
             if (GOOGLE_CLIENT_ID is null)
             {
                 throw new ArgumentException(nameof(GOOGLE_CLIENT_ID));
             }
+
             opt.ClientId = GOOGLE_CLIENT_ID;
             opt.ClientSecret = GOOGLE_SECRET_CLIENT;
             opt.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            
+            opt.Scope.Add("profile");
+            opt.Scope.Add("email");
+            opt.ClaimActions.MapJsonKey("picture", "picture");
+            opt.SaveTokens = true;
         }).AddJwtBearer(opt =>
         {
             opt.MapInboundClaims = false;

@@ -33,9 +33,23 @@ public class UserService : IUserService
     {
         var user = await _currentUserService.GetUser();
         if (user is null) return null;
+
         var claims = await _userManager.GetClaimsAsync(user);
         var isAdmin = claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
         var isUser = claims.Any(c => c.Type == "isUser" && c.Value == "true");
+
+        // Obtener la URL de la imagen del perfil de Google
+        var pictureClaim = claims.FirstOrDefault(c => c.Type == "picture");
+        var avatarUrl = pictureClaim?.Value;
+        if (pictureClaim != null)
+        {
+            Console.WriteLine($"Claim picture encontrada: {pictureClaim.Value}");
+        }
+        else
+        {
+            Console.WriteLine("No se encontró claim de imagen para el usuario");
+        }
+        var initials = $"{user.FirstName?.Substring(0, 1 > user.FirstName?.Length ? user.FirstName?.Length ?? 0 : 1)}{user.LastName?.Substring(0, 1 > user.LastName?.Length ? user.LastName?.Length ?? 0 : 1)}".ToUpper();
 
         return new
         {
@@ -45,14 +59,15 @@ public class UserService : IUserService
             firstName = user.FirstName ?? string.Empty,
             lastName = user.LastName ?? string.Empty,
             phone = user.PhoneNumber,
-            permition = new
+            avatarUrl = avatarUrl,
+            initials = initials,
+            permission = new
             {
-                ADMIN = isAdmin,
-                USER = isUser
+                admin = isAdmin, 
+                user = isUser
             }
         };
     }
-
     public async Task<UserDto> UpdateUserAsync(UserUpdateDto dto)
     {
         var user = await _currentUserService.GetUser();

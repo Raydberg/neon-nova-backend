@@ -119,6 +119,34 @@ namespace Application.Services
             }
 
             var user = await _authRepository.FindUserByEmailAsync(email);
+            var pictureUrl = claimsPrincipal.FindFirstValue("picture");
+            if (!string.IsNullOrEmpty(pictureUrl))
+            {
+                Console.WriteLine($"Picture URL: {pictureUrl}");
+                await _authRepository.AddClaimAsync(user, new Claim("picture", pictureUrl));
+            }
+            if (string.IsNullOrEmpty(pictureUrl))
+            {
+                // Intentar buscar en todas las claims
+                foreach (var claim in claimsPrincipal.Claims)
+                {
+                    if (claim.Type.Contains("picture") || claim.Type.Contains("image") || claim.Type.Contains("photo"))
+                    {
+                        pictureUrl = claim.Value;
+                        break;
+                    }
+                }
+            }
+                
+            if (!string.IsNullOrEmpty(pictureUrl))
+            {
+                Console.WriteLine($"Picture URL encontrada: {pictureUrl}");
+                await _authRepository.AddClaimAsync(user, new Claim("picture", pictureUrl));
+            }
+            else
+            {
+                Console.WriteLine("No se encontró URL de imagen en las claims de Google");
+            }
             if (user is null)
             {
                 var firstName = claimsPrincipal.FindFirstValue(ClaimTypes.GivenName) ?? "Usuario";
