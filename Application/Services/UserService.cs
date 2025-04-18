@@ -33,9 +33,22 @@ public class UserService : IUserService
     {
         var user = await _currentUserService.GetUser();
         if (user is null) return null;
+
         var claims = await _userManager.GetClaimsAsync(user);
         var isAdmin = claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
         var isUser = claims.Any(c => c.Type == "isUser" && c.Value == "true");
+
+        var pictureClaim = claims.FirstOrDefault(c => c.Type == "picture");
+        string avatarUrl = null;
+
+        if (!string.IsNullOrEmpty(pictureClaim?.Value))
+        {
+            avatarUrl = $"/api/proxy/image?url={Uri.EscapeDataString(pictureClaim.Value)}";
+        }
+
+        var initials =
+            $"{user.FirstName?.Substring(0, 1 > user.FirstName?.Length ? user.FirstName?.Length ?? 0 : 1)}{user.LastName?.Substring(0, 1 > user.LastName?.Length ? user.LastName?.Length ?? 0 : 1)}"
+                .ToUpper();
 
         return new
         {
@@ -45,10 +58,12 @@ public class UserService : IUserService
             firstName = user.FirstName ?? string.Empty,
             lastName = user.LastName ?? string.Empty,
             phone = user.PhoneNumber,
-            permition = new
+            avatarUrl = avatarUrl,
+            initials = initials,
+            permission = new
             {
-                ADMIN = isAdmin,
-                USER = isUser
+                admin = isAdmin,
+                user = isUser
             }
         };
     }

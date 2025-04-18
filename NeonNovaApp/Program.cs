@@ -19,13 +19,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 var originsPermits = builder.Configuration.GetSection("origenesPermitidos").Get<string[]>()!;
 builder.Services.AddCors(opt =>
 {
-    opt.AddDefaultPolicy(optCors => { optCors.WithOrigins(originsPermits).AllowAnyMethod().AllowAnyHeader(); });
+    opt.AddDefaultPolicy(optCors => { optCors.WithOrigins(originsPermits).AllowAnyMethod().AllowAnyHeader().AllowCredentials(); });
 });
 
 // Autenticación y autorización
 builder.Services.AddAuthenticationConfiguration();
 
 // Servicios de aplicación
+builder.Services.AddHttpServices();
 builder.Services.AddApplicationServices();
 builder.Services.AddMappingConfiguration();
 
