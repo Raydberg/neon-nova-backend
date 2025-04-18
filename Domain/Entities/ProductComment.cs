@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities;
 
@@ -10,7 +11,7 @@ public class ProductComment
     public int ProductId { get; set; }
 
     [Required(ErrorMessage = "El usuario es obligatorio para el comentario.")]
-    public int UserId { get; set; }
+    public string  UserId { get; set; }
 
     [Required(ErrorMessage = "El comentario es obligatorio.")]
     [MaxLength(500, ErrorMessage = "El comentario no debe superar los 500 caracteres.")]
@@ -24,5 +25,7 @@ public class ProductComment
 
     // Propiedades de navegación.
     public Product Product { get; set; }
-    public Users Users { get; set; }
+    
+    [ForeignKey("UserId")]
+    public Users User { get; set; }
 }
