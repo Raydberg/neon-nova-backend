@@ -1,4 +1,5 @@
-﻿using Application.DTOs.ProductsDTOs;
+﻿using Application.DTOs.Common;
+using Application.DTOs.ProductsDTOs;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.Http;
@@ -23,5 +24,7 @@ public interface IProductService
     Task DeleteAsync(int id);
 
     Task<ProductImageDTO> UpdateImageAsync(int productId, int imageId, IFormFile image);
-    Task<IEnumerable<ProductoSimplificadoDto>> GetProductSimplified();
+    Task<PaginatedResponseDto<ProductoSimplificadoDto>> GetProductSimplified(int pageNumber , int pageSize);
+    Task<ProductWithPaginatedCommentsDto> GetProductWithPaginatedCommentsAsync(
+        int productId, int commentsPage, int commentsPageSize);
 }

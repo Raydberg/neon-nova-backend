@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.CategoryDTOs;
+using Application.DTOs.Common;
 using Application.DTOs.ProductsDTOs;
 using Application.Interfaces;
 using AutoMapper;
@@ -110,6 +111,7 @@ public class ProductService : IProductService
                 Price = product.Price,
                 Stock = product.Stock,
                 Status = product.Status,
+                Punctuation = product.Punctuation,
                 CreatedAt = product.CreatedAt,
                 Category = _mapper.Map<CategoryDto>(product.Category),
                 Images = new List<ProductImageDTO>()
@@ -153,7 +155,7 @@ public class ProductService : IProductService
 
             var images = await _productImageService.GetImagesProductIdAsync(product.Id);
             dto.Images = _mapper.Map<List<ProductImageDTO>>(images);
-        
+
             var comments = await _productCommentService.GetCommentsByProductIdAsync(product.Id);
             dto.Comments = comments;
 
@@ -188,6 +190,7 @@ public class ProductService : IProductService
             Price = product.Price,
             Stock = product.Stock,
             Status = product.Status,
+            Punctuation = product.Punctuation,
             Category = _mapper.Map<CategoryDto>(product.Category),
             CreatedAt = product.CreatedAt,
             Images = _mapper.Map<List<ProductImageDTO>>(images)
@@ -260,10 +263,12 @@ public class ProductService : IProductService
         return _mapper.Map<ProductImageDTO>(existingImage);
     }
 
-    public async Task<IEnumerable<ProductoSimplificadoDto>> GetProductSimplified()
+
+    public async Task<PaginatedResponseDto<ProductoSimplificadoDto>> GetProductSimplified(int pageNumber, int pageSize)
     {
-        var simplifiesProducts = await _repository.GetAllProductSimplifiedAsync();
-        return simplifiesProducts.Select(p => new ProductoSimplificadoDto
+        var simplifiedProducts = await _repository.GetAllProductSimplifiedPaginatedAsync(pageNumber, pageSize);
+
+        var productDtos = simplifiedProducts.Items.Select(p => new ProductoSimplificadoDto
         {
             Id = p.Id,
             Name = p.Name,
@@ -272,6 +277,53 @@ public class ProductService : IProductService
             CategoryName = p.CategoryName,
             Punctuation = p.Punctuation,
             ImageUrl = p.ImageUrl
-        });
+        }).ToList();
+
+        return new PaginatedResponseDto<ProductoSimplificadoDto>
+        {
+            Items = productDtos,
+            TotalItems = simplifiedProducts.TotalCount,
+            PageNumber = simplifiedProducts.PageNumber,
+            PageSize = simplifiedProducts.PageSize,
+            TotalPages = simplifiedProducts.TotalPages
+        };
+    }
+
+    public async Task<ProductWithPaginatedCommentsDto> GetProductWithPaginatedCommentsAsync(
+        int productId, int commentsPage, int commentsPageSize)
+    {
+        var product = await _repository.GetByIdWithCategoryAsync(productId);
+        if (product == null)
+            throw new KeyNotFoundException($"No se encontró el producto con ID {productId}");
+
+        var images = await _productImageService.GetImagesProductIdAsync(product.Id);
+        var pagedComments = await _productCommentService.GetPaginatedCommentsByProductIdAsync(
+            productId, commentsPage, commentsPageSize);
+
+        
+        int? punctuation = product.Punctuation;
+        if (!punctuation.HasValue && pagedComments.Items.Any())
+        {
+            punctuation = (int)Math.Round(pagedComments.Items.Average(c => c.Rating));
+        }
+
+        return new ProductWithPaginatedCommentsDto
+        {
+            Id = product.Id,
+            Name = product.Name,
+            Description = product.Description,
+            Price = product.Price,
+            Stock = product.Stock,
+            Status = product.Status,
+            Punctuation = punctuation, 
+            Category = _mapper.Map<CategoryDto>(product.Category),
+            CreatedAt = product.CreatedAt,
+            Images = _mapper.Map<List<ProductImageDTO>>(images),
+            Comments = pagedComments.Items.ToList(),
+            TotalCommentsCount = pagedComments.TotalCount,
+            CommentsPageNumber = pagedComments.PageNumber,
+            CommentsPageSize = pagedComments.PageSize,
+            CommentsTotalPages = pagedComments.TotalPages
+        };
     }
 }

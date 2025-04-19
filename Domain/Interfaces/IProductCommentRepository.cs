@@ -11,5 +11,6 @@ public interface IProductCommentRepository
     Task<bool> ExistsByProductAndUserAsync(int productId, string userId);
     Task<ProductComment?> GetByProductAndUserAsync(int productId, string userId);
     Task<List<ProductComment>> GetCommentsByProductIdAsync(int productId);
-
+    Task<PagedResult<ProductComment>> GetPaginatedCommentsByProductIdAsync(int productId, int pageNumber, int pageSize);
+    
 }

@@ -59,9 +59,15 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet("simplified")]
-    public async Task<IActionResult> GetSimplifiedProducts()
+    public async Task<IActionResult> GetSimplifiedProducts(
+        [FromQuery] int pageNumber = 1 , [FromQuery] int pageSize = 10
+        )
     {
-        var products = await _productService.GetProductSimplified();
+
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+        
+        var products = await _productService.GetProductSimplified(pageNumber, pageSize);
         return Ok(products);
     }
 
@@ -122,6 +128,33 @@ public class ProductController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"Error al eliminar la imagen: {ex.Message}");
+        }
+    }
+
+    [HttpGet("{id}/with-comments")]
+    public async Task<ActionResult<ProductWithPaginatedCommentsDto>> GetProductWithComments(
+        int id,
+        [FromQuery] int commentsPage = 1,
+        [FromQuery] int commentsPageSize = 5)
+    {
+        try
+        {
+            if (commentsPage < 1) commentsPage = 1;
+            if (commentsPageSize < 1) commentsPageSize = 5;
+
+            var product = await _productService.GetProductWithPaginatedCommentsAsync(
+                id, commentsPage, commentsPageSize);
+
+            return Ok(product);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500,
+                new { message = "Error al obtener el producto con comentarios", detail = ex.Message });
         }
     }
 }

@@ -113,9 +113,72 @@ public class ProductRepository : IProductRepository
                 Price = p.Price,
                 CategoryName = p.Category.Name,
                 CategoryId = p.CategoryId,
-                Punctuation = p.Punctuation,
+                Punctuation = _context.ProductComments
+                    .Where(c => c.ProductId == p.Id)
+                    .Any()
+                    ? (int)Math.Round(_context.ProductComments
+                        .Where(c => c.ProductId == p.Id)
+                        .Average(c => (double)c.Rating))
+                    : 0,
                 ImageUrl = p.Images.OrderBy(i => i.Id).FirstOrDefault()!.ImageUrl
             })
             .ToListAsync();
+    }
+
+    public async Task UpdateProductPunctuationAsync(int productId)
+    {
+        var avgRating = await _context.ProductComments
+            .Where(c => c.ProductId == productId)
+            .AverageAsync(c => c.Rating);
+
+        var product = await _context.Products.FindAsync(productId);
+        if (product != null)
+        {
+            product.Punctuation = (int)Math.Round(avgRating);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<PagedResult<ProductSimplified>> GetAllProductSimplifiedPaginatedAsync(int pageNumber,
+        int pageSize)
+    {
+        var query = _context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images)
+            .Where(p => p.Status == ProductStatus.Active);
+
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        var products = await query
+            .OrderBy(p => p.Id)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new ProductSimplified
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                CategoryName = p.Category.Name,
+                CategoryId = p.CategoryId,
+                Punctuation = _context.ProductComments
+                    .Where(c => c.ProductId == p.Id)
+                    .Any()
+                    ? (int)Math.Round(_context.ProductComments
+                        .Where(c => c.ProductId == p.Id)
+                        .Average(c => (double)c.Rating))
+                    : 0,
+                ImageUrl = p.Images.OrderBy(i => i.Id).FirstOrDefault()!.ImageUrl
+            })
+            .ToListAsync();
+
+        return new PagedResult<ProductSimplified>
+        {
+            Items = products,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = totalPages
+        };
     }
 }

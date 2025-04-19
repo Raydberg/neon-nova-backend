@@ -14,5 +14,8 @@ namespace Domain.Interfaces
         Task<Product> GetByIdWithCategoryAsync(int id);
         Task<IEnumerable<Product>> GetAllWithCategoriesAsync();
         Task<IEnumerable<ProductSimplified>> GetAllProductSimplifiedAsync();
+        Task UpdateProductPunctuationAsync(int productId);
+        Task<PagedResult<ProductSimplified>> GetAllProductSimplifiedPaginatedAsync(int pageNumber, int pageSize);
+
     }
 }
