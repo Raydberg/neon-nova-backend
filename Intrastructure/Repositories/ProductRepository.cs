@@ -100,6 +100,49 @@ public class ProductRepository : IProductRepository
             .ToListAsync();
     }
 
+    public async Task<PagedResult<Product>> GetProductsByCategoryPaginatedAsync(int categoryId, int pageNumber,
+        int pageSize)
+    {
+        var query = _context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images)
+            .Where(p => p.CategoryId == categoryId);
+
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        var products = await query
+            .OrderBy(p => p.Id)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new
+            {
+                Product = p,
+                Punctuation = _context.ProductComments
+                    .Where(c => c.ProductId == p.Id)
+                    .Any()
+                    ? (int)Math.Round(_context.ProductComments
+                        .Where(c => c.ProductId == p.Id)
+                        .Average(c => (double)c.Rating))
+                    : 0
+            })
+            .ToListAsync();
+
+        foreach (var item in products)
+        {
+            item.Product.Punctuation = item.Punctuation;
+        }
+
+        return new PagedResult<Product>
+        {
+            Items = products.Select(p => p.Product).ToList(),
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = totalPages
+        };
+    }
+
     public async Task<IEnumerable<ProductSimplified>> GetAllProductSimplifiedAsync()
     {
         return await _context.Products

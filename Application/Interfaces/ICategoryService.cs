@@ -12,6 +12,9 @@ public interface ICategoryService
     Task<CategoryDto> AddCategoryAsync(CreateCategoryRequestDto category);
     Task<CategoryDto> UpdateCategoryAsync(int id, UpdateCategoryRequestDto category);
     Task<List<ProductResponseDTO>> GetProductsByCategoryAsync(int categoryId);
-    Task<List<ProductWithFirstImageDTO>> GetProductsByCategoryWithFirstImageAsync(int categoryId);
+
+    Task<PaginatedResponseDto<ProductWithFirstImageDTO>> GetProductsByCategoryWithFirstImagePaginatedAsync(
+        int categoryId, int pageSize, int pageNumber);
+
     Task DeleteCategoryAsync(int id);
 }

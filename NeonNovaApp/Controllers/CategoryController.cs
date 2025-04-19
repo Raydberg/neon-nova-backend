@@ -83,11 +83,17 @@ namespace NeonNovaApp.Controllers
         }
 
         [HttpGet("{id}/products-with-first-image")]
-        public async Task<ActionResult<List<ProductWithFirstImageDTO>>> GetProductsWithFirstImage(int id)
+        public async Task<ActionResult<PaginatedResponseDto<ProductWithFirstImageDTO>>> GetProductsWithFirstImage(
+            int id,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
             try
             {
-                var products = await _categoryService.GetProductsByCategoryWithFirstImageAsync(id);
+                if (pageNumber < 1) pageNumber = 1;
+                if (pageSize < 1) pageSize = 10;
+                var products =
+                    await _categoryService.GetProductsByCategoryWithFirstImagePaginatedAsync(id, pageNumber, pageSize);
                 return Ok(products);
             }
             catch (KeyNotFoundException ex)

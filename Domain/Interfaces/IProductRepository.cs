@@ -13,9 +13,9 @@ namespace Domain.Interfaces
         Task DeletedAsync(int id);
         Task<Product> GetByIdWithCategoryAsync(int id);
         Task<IEnumerable<Product>> GetAllWithCategoriesAsync();
+        Task<PagedResult<Product>> GetProductsByCategoryPaginatedAsync(int categoryId, int pageNumber, int pageSize);
         Task<IEnumerable<ProductSimplified>> GetAllProductSimplifiedAsync();
         Task UpdateProductPunctuationAsync(int productId);
         Task<PagedResult<ProductSimplified>> GetAllProductSimplifiedPaginatedAsync(int pageNumber, int pageSize);
-
     }
 }

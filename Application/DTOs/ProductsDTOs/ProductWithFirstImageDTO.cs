@@ -12,6 +12,7 @@ public class ProductWithFirstImageDTO
     public CategoryDto Category { get; set; }
     public DateTime CreatedAt { get; set; }
     public int Stock { get; set; }
+    public int? Punctuation { get; set; }
     public ProductStatus Status { get; set; }
     public ProductImageDTO FirstImage { get; set; }
 }
