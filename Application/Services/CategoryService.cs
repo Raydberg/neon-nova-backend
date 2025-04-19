@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.CategoryDTOs;
+using Application.DTOs.Common;
 using Application.DTOs.ProductsDTOs;
 using Application.Interfaces;
 using AutoMapper;
@@ -26,6 +27,30 @@ public class CategoryService : ICategoryService
 
     public async Task<List<CategoryDto>> GetAllAsync() =>
         _mapper.Map<List<CategoryDto>>(await _repository.GetAllAsync());
+
+    public async Task<PaginatedResponseDto<CategoryWithProductCountDto>> GetAllPaginatedAsync(int pageNumber,
+        int pageSize)
+    {
+        var pagedResult = await _repository.GetAllPaginatedAsync(pageNumber, pageSize);
+
+        var dtoItems = pagedResult.Items.Select(category => new CategoryWithProductCountDto
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Description = category.Description,
+            CreatedAt = category.CreatedAt,
+            ProductCount = category.Products?.Count ?? 0
+        }).ToList();
+
+        return new PaginatedResponseDto<CategoryWithProductCountDto>
+        {
+            Items = dtoItems,
+            TotalItems = pagedResult.TotalCount,
+            PageNumber = pagedResult.PageNumber,
+            PageSize = pagedResult.PageSize,
+            TotalPages = pagedResult.TotalPages
+        };
+    }
 
     public async Task<CategoryDto> GetByIdAsync(int id) => _mapper.Map<CategoryDto>(await _repository.GetByIdAsync(id));
 

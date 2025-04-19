@@ -19,6 +19,30 @@ public class CategoryRepository : ICategoryRepository
 
     public async Task<List<Category>> GetAllAsync() => await _context.Categories.ToListAsync();
 
+    public async Task<PagedResult<Category>> GetAllPaginatedAsync(int pageNumber, int pageSize)
+    {
+        var query = _context.Categories
+            .Include(c => c.Products)
+            .AsQueryable();
+
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResult<Category>
+        {
+            Items = items,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = totalPages
+        };
+    }
+
     public async Task<List<Product>> GetProductsAsync(int categoryId)
     {
         throw new NotImplementedException();

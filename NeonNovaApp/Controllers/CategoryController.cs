@@ -1,4 +1,5 @@
 using Application.DTOs.CategoryDTOs;
+using Application.DTOs.Common;
 using Application.DTOs.ProductsDTOs;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +18,17 @@ namespace NeonNovaApp.Controllers
         }
 
         [HttpGet]
+        public async Task<ActionResult<PaginatedResponseDto<CategoryWithProductCountDto>>> GetAllCategories(
+            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10
+        )
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+            var categories = await _categoryService.GetAllPaginatedAsync(pageNumber, pageSize);
+            return Ok(categories);
+        }
+
+        [HttpGet("landing")]
         public async Task<ActionResult<List<CategoryDto>>> GetAll()
         {
             var categories = await _categoryService.GetAllAsync();
@@ -35,7 +47,7 @@ namespace NeonNovaApp.Controllers
         public async Task<ActionResult<CategoryDto>> Create(CreateCategoryRequestDto dto)
         {
             var category = await _categoryService.AddCategoryAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = category.Id },category);
+            return CreatedAtAction(nameof(GetById), new { id = category.Id }, category);
         }
 
         [HttpPut("{id}")]
@@ -51,6 +63,7 @@ namespace NeonNovaApp.Controllers
             await _categoryService.DeleteCategoryAsync(id);
             return NoContent();
         }
+
         [HttpGet("{id}/products")]
         public async Task<ActionResult<List<ProductResponseDTO>>> GetProductsByCategory(int id)
         {
@@ -68,6 +81,7 @@ namespace NeonNovaApp.Controllers
                 return StatusCode(500, $"Error al obtener productos por categoría: {ex.Message}");
             }
         }
+
         [HttpGet("{id}/products-with-first-image")]
         public async Task<ActionResult<List<ProductWithFirstImageDTO>>> GetProductsWithFirstImage(int id)
         {
