@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.ProductsDTOs;
 using Application.Interfaces;
+using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace NeonNovaApp.Controllers;
@@ -24,10 +25,30 @@ public class ProductController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAllAsync()
+    [HttpGet("with-comments")]
+    public async Task<ActionResult<ProductWithCommentsPaginatedResponseDto>> GetAllWithCommentsAsync(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] ProductStatus? status = null)
     {
-        return Ok(await _productService.GetAllAsync());
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var products = await _productService.GetAllPaginatedWithCommentsAsync(pageNumber, pageSize, status);
+        return Ok(products);
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<ProductPaginatedResponseDto>> GetAllAsync(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] ProductStatus? status = null)
+    {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var products = await _productService.GetAllPaginatedAsync(pageNumber, pageSize, status);
+        return Ok(products);
     }
 
     [HttpGet("{id}")]
@@ -43,6 +64,7 @@ public class ProductController : ControllerBase
         var products = await _productService.GetProductSimplified();
         return Ok(products);
     }
+
     [HttpPut("{productId}/images/{imageId}")]
     public async Task<IActionResult> UpdateImage(int productId, int imageId, [FromForm] UpdateProductImageDTO dto)
     {
@@ -78,6 +100,7 @@ public class ProductController : ControllerBase
             throw;
         }
     }
+
     [HttpDelete("{productId}/images/{imageId}")]
     public async Task<IActionResult> DeleteImage(int productId, int imageId)
     {

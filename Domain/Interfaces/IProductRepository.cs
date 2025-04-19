@@ -1,10 +1,12 @@
 ﻿using Domain.Entities;
+using Domain.Enums;
 
 namespace Domain.Interfaces
 {
     public interface IProductRepository
     {
         Task<Product> GetByIdAsync(int id);
+        Task<PagedResult<Product>> GetAllPaginatedAsync(int pageNumber, int pageSize, ProductStatus? status = null);
         Task<IEnumerable<Product>> GetAllAsync();
         Task<Product> CreateAsync(Product product);
         Task UpdateAsync(Product product);

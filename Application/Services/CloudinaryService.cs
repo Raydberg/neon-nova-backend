@@ -21,7 +21,7 @@ public class CloudinaryService : ICloudinaryService
         {
             File = new FileDescription(file.FileName, file.OpenReadStream()),
             PublicId = Guid.NewGuid().ToString(),
-            Transformation = new Transformation().Height(800).Width(600)
+            // Transformation = new Transformation().Height(800).Width(600)
         };
         var result = await _cloudinary.UploadAsync(uploadParams);
         return result.SecureUrl.AbsoluteUri;

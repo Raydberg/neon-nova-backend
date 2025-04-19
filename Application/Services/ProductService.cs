@@ -3,6 +3,7 @@ using Application.DTOs.ProductsDTOs;
 using Application.Interfaces;
 using AutoMapper;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
 
@@ -16,10 +17,14 @@ public class ProductService : IProductService
     private readonly IMapper _mapper;
     private readonly IProductImageService _productImageService;
     private readonly ICategoryRepository _categoryRepository;
+    private readonly IProductCommentService _productCommentService;
 
     public ProductService(IProductRepository repository, IProductImageRepository imageRepository,
         ICloudinaryService cloudinary, IMapper mapper,
-        IProductImageService productImageService, ICategoryRepository categoryRepository)
+        IProductImageService productImageService,
+        ICategoryRepository categoryRepository,
+        IProductCommentService productCommentService
+    )
     {
         _repository = repository;
         _imageRepository = imageRepository;
@@ -27,6 +32,7 @@ public class ProductService : IProductService
         _mapper = mapper;
         _productImageService = productImageService;
         _categoryRepository = categoryRepository;
+        _productCommentService = productCommentService;
     }
 
 
@@ -86,6 +92,82 @@ public class ProductService : IProductService
         }
 
         return await GetByIdWithImagesAsync(productToCreate.Id);
+    }
+
+    public async Task<ProductPaginatedResponseDto> GetAllPaginatedAsync(int pageNumber, int pageSize,
+        ProductStatus? status = null)
+    {
+        var pagedResult = await _repository.GetAllPaginatedAsync(pageNumber, pageSize, status);
+        var productDTOs = new List<ProductResponseDTO>();
+
+        foreach (var product in pagedResult.Items)
+        {
+            var dto = new ProductResponseDTO
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                Stock = product.Stock,
+                Status = product.Status,
+                CreatedAt = product.CreatedAt,
+                Category = _mapper.Map<CategoryDto>(product.Category),
+                Images = new List<ProductImageDTO>()
+            };
+
+            var images = await _productImageService.GetImagesProductIdAsync(product.Id);
+            dto.Images = _mapper.Map<List<ProductImageDTO>>(images);
+            productDTOs.Add(dto);
+        }
+
+        return new ProductPaginatedResponseDto
+        {
+            Products = productDTOs,
+            TotalItems = pagedResult.TotalCount,
+            PageNumber = pagedResult.PageNumber,
+            PageSize = pagedResult.PageSize,
+            TotalPages = pagedResult.TotalPages
+        };
+    }
+
+    public async Task<ProductWithCommentsPaginatedResponseDto> GetAllPaginatedWithCommentsAsync(
+        int pageNumber, int pageSize, ProductStatus? status = null)
+    {
+        var pagedResult = await _repository.GetAllPaginatedAsync(pageNumber, pageSize, status);
+        var productDTOs = new List<ProductsWithCommentsDto>();
+
+        foreach (var product in pagedResult.Items)
+        {
+            var dto = new ProductsWithCommentsDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                Stock = product.Stock,
+                Status = product.Status,
+                CreatedAt = product.CreatedAt,
+                Category = _mapper.Map<CategoryDto>(product.Category),
+                Images = new List<ProductImageDTO>()
+            };
+
+            var images = await _productImageService.GetImagesProductIdAsync(product.Id);
+            dto.Images = _mapper.Map<List<ProductImageDTO>>(images);
+        
+            var comments = await _productCommentService.GetCommentsByProductIdAsync(product.Id);
+            dto.Comments = comments;
+
+            productDTOs.Add(dto);
+        }
+
+        return new ProductWithCommentsPaginatedResponseDto
+        {
+            Products = productDTOs,
+            TotalItems = pagedResult.TotalCount,
+            PageNumber = pagedResult.PageNumber,
+            PageSize = pagedResult.PageSize,
+            TotalPages = pagedResult.TotalPages
+        };
     }
 
     public async Task<ProductResponseDTO> GetByIdWithImagesAsync(int id)

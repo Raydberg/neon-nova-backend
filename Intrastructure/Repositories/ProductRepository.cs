@@ -19,6 +19,38 @@ public class ProductRepository : IProductRepository
         return await _context.Products.FindAsync(id);
     }
 
+    public async Task<PagedResult<Product>> GetAllPaginatedAsync(int pageNumber, int pageSize,
+        ProductStatus? status = null)
+    {
+        var query = _context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images)
+            .AsQueryable();
+
+        if (status.HasValue)
+        {
+            query = query.Where(p => p.Status == status.Value);
+        }
+
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        var items = await query
+            .OrderBy(p => p.Id)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResult<Product>
+        {
+            Items = items,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = totalPages
+        };
+    }
+
     public async Task<IEnumerable<Product>> GetAllAsync()
     {
         return await _context.Products.ToListAsync();

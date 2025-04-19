@@ -26,7 +26,38 @@ public class UserService : IUserService
     public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
     {
         var users = await _userRepository.GetAllUsersAsync();
-        return _mapper.Map<IEnumerable<UserDto>>(users);
+        var userDtos = new List<UserDto>();
+
+        foreach (var user in users)
+        {
+            var userDto = _mapper.Map<UserDto>(user);
+
+            var claims = await _userManager.GetClaimsAsync(user);
+            userDto.IsAdmin = claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
+
+            userDto.IsActive = !user.LockoutEnabled ||
+                               (user.LockoutEnd == null || user.LockoutEnd < DateTimeOffset.UtcNow);
+
+            var pictureClaim = claims.FirstOrDefault(c => c.Type == "picture");
+            if (!string.IsNullOrEmpty(pictureClaim?.Value))
+            {
+                userDto.AvatarUrl = $"/api/proxy/image?url={Uri.EscapeDataString(pictureClaim.Value)}";
+            }
+
+            userDto.InitialAvatar =
+                $"{user.FirstName?.Substring(0, 1 > user.FirstName?.Length ? user.FirstName?.Length ?? 0 : 1)}{user.LastName?.Substring(0, 1 > user.LastName?.Length ? user.LastName?.Length ?? 0 : 1)}"
+                    .ToUpper();
+
+            // Fecha de creación
+            userDto.CreatedAt = user.CreatedAt;
+
+            // Último login (necesitarás agregar este campo a tu entidad Users)
+            userDto.LastLogin = user.LastLogin;
+
+            userDtos.Add(userDto);
+        }
+
+        return userDtos;
     }
 
     public async Task<object> GetCurrentUserAsync()
@@ -78,6 +109,31 @@ public class UserService : IUserService
 
         var updatedUser = await _userRepository.UpdateUserAsync(user);
         return _mapper.Map<UserDto>(updatedUser);
+    }
+
+    public async Task<UserDto> GetUserByIdAsync(string userId)
+    {
+        var user = await _userRepository.GetUserByIdAsync(userId);
+        if (user is null) throw new KeyNotFoundException("Usuario no encontrado");
+        var userDto = _mapper.Map<UserDto>(user);
+
+        var claims = await _userManager.GetClaimsAsync(user);
+        userDto.IsAdmin = claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
+        userDto.IsActive = !user.LockoutEnabled || (user.LockoutEnd == null || user.LockoutEnd < DateTimeOffset.UtcNow);
+        var pictureClaim = claims.FirstOrDefault(c => c.Type == "picture");
+        if (!string.IsNullOrEmpty(pictureClaim?.Value))
+        {
+            userDto.AvatarUrl = $"/api/proxy/image?url={Uri.EscapeDataString(pictureClaim.Value)}";
+        }
+
+        userDto.InitialAvatar =
+            $"{user.FirstName?.Substring(0, 1 > user.FirstName?.Length ? user.FirstName?.Length ?? 0 : 1)}{user.LastName?.Substring(0, 1 > user.LastName?.Length ? user.LastName?.Length ?? 0 : 1)}"
+                .ToUpper();
+
+        userDto.CreatedAt = user.CreatedAt;
+        userDto.LastLogin = user.LastLogin;
+
+        return userDto;
     }
 
     public async Task<bool> DeleteUserAsync(string userId)
