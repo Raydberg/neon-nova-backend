@@ -3,6 +3,7 @@ using Application.DTOs.ProductsDTOs;
 using Application.Interfaces;
 using AutoMapper;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
 
@@ -86,6 +87,42 @@ public class ProductService : IProductService
         }
 
         return await GetByIdWithImagesAsync(productToCreate.Id);
+    }
+
+    public async Task<ProductPaginatedResponseDto> GetAllPaginatedAsync(int pageNumber, int pageSize,
+        ProductStatus? status = null)
+    {
+        var pagedResult = await _repository.GetAllPaginatedAsync(pageNumber, pageSize, status);
+        var productDTOs = new List<ProductResponseDTO>();
+
+        foreach (var product in pagedResult.Items)
+        {
+            var dto = new ProductResponseDTO
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                Stock = product.Stock,
+                Status = product.Status,
+                CreatedAt = product.CreatedAt,
+                Category = _mapper.Map<CategoryDto>(product.Category),
+                Images = new List<ProductImageDTO>()
+            };
+
+            var images = await _productImageService.GetImagesProductIdAsync(product.Id);
+            dto.Images = _mapper.Map<List<ProductImageDTO>>(images);
+            productDTOs.Add(dto);
+        }
+
+        return new ProductPaginatedResponseDto
+        {
+            Products = productDTOs,
+            TotalItems = pagedResult.TotalCount,
+            PageNumber = pagedResult.PageNumber,
+            PageSize = pagedResult.PageSize,
+            TotalPages = pagedResult.TotalPages
+        };
     }
 
     public async Task<ProductResponseDTO> GetByIdWithImagesAsync(int id)
