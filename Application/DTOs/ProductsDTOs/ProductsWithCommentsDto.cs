@@ -1,6 +1,8 @@
-﻿namespace Application.DTOs.ProductsDTOs;
+﻿using Application.DTOs.ComentDTOs;
 
-public class ProductsWithCommentsDto
+namespace Application.DTOs.ProductsDTOs;
+
+public record ProductsWithCommentsDto:ProductResponseDTO
 {
-    
+    public List<CommentDto> Comments { get; set; } = new List<CommentDto>();
 }

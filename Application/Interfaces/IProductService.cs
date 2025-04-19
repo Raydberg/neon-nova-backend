@@ -9,7 +9,15 @@ public interface IProductService
 {
     Task<List<ProductResponseDTO>> GetAllAsync();
     Task<ProductResponseDTO> CreateAsync(CreateProductRequestDTO dto);
-    Task<ProductPaginatedResponseDto> GetAllPaginatedAsync(int pageNumber, int pageSize, ProductStatus? status = null);
+
+    Task<ProductPaginatedResponseDto> GetAllPaginatedAsync(
+        int pageNumber, int pageSize, ProductStatus? status = null
+    );
+
+    Task<ProductWithCommentsPaginatedResponseDto> GetAllPaginatedWithCommentsAsync(
+        int pageNumber, int pageSize, ProductStatus? status = null
+    );
+
     Task<ProductResponseDTO> GetByIdWithImagesAsync(int id);
     Task<ProductResponseDTO> UpdateAsync(int id, UpdateProductRequestDTO dto);
     Task DeleteAsync(int id);
