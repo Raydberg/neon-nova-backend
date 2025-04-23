@@ -1,0 +1,85 @@
+﻿using Domain.Entities;
+using Domain.Enums;
+using Domain.Interfaces;
+using Intrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace Intrastructure.Repositories;
+
+public class CheckoutRepository:ICheckoutRepository
+{
+    private readonly ApplicationDbContext _db;
+
+    public CheckoutRepository(ApplicationDbContext db )
+    {
+        _db = db;
+    }
+   
+    public async Task<Address> SaveShippingAddressAsync(Address address)
+    {
+        _db.Addresses.Add(address);
+        await _db.SaveChangesAsync();
+        return address;
+    }
+
+    public async Task<CartShop> GetActiveCartByUserIdAsync(string userId)
+    {
+        return await _db.CartShops
+            .Include(c => c.CartShopDetails)
+            .Where(c => c.UserId == userId && c.Status == CartShopStatus.Active)
+            .OrderByDescending(c => c.CreationDate)
+            .FirstOrDefaultAsync();
+    }
+
+
+
+    public async Task<Address> GetLatestShippingAddressByUserIdAsync(string userId)
+    {
+        return await _db.Addresses
+            .Where(a => a.UserId == userId)
+            .OrderByDescending(a => a.Id)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<bool> ProductExistsAsync(int productId)
+    {
+        return await _db.Products.AnyAsync(p => p.Id == productId);
+    }
+
+    public async Task<Product> GetProductByIdAsync(int productId)
+    {
+        return await _db.Products.FindAsync(productId);
+    }
+
+    /*
+     * No es necesario ya lo obtenermos al usuario por sesion
+     */
+    
+    // public async Task<Users> GetUserByEmailAsync(string email)
+    // {
+    //     return await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+    // }
+
+    public async Task SaveCartAsync(CartShop cart)
+    {
+        _db.CartShops.Add(cart);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task SaveOrderAsync(Order order)
+    {
+        _db.Orders.Add(order);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task UpdateCartStatusAsync(CartShop cart)
+    {
+        _db.CartShops.Update(cart);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await _db.SaveChangesAsync();
+    }
+}
