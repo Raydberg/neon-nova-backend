@@ -1,4 +1,6 @@
-﻿namespace Domain.Entities;
+﻿using Domain.Enums;
+
+namespace Domain.Entities;
 
 public class ProductSimplified
 {
@@ -8,5 +10,6 @@ public class ProductSimplified
     public int CategoryId { get; set; }
     public string CategoryName { get; set; }
     public int? Punctuation { get; set; }
+    public ProductStatus Status { get; set; }
     public string ImageUrl { get; set; }
 }

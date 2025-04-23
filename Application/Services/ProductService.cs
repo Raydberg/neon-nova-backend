@@ -276,6 +276,7 @@ public class ProductService : IProductService
             CategoryId = p.CategoryId,
             CategoryName = p.CategoryName,
             Punctuation = p.Punctuation,
+            Status = p.Status,
             ImageUrl = p.ImageUrl
         }).ToList();
 

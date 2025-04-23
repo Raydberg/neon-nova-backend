@@ -204,6 +204,7 @@ public class ProductRepository : IProductRepository
                 Price = p.Price,
                 CategoryName = p.Category.Name,
                 CategoryId = p.CategoryId,
+                Status = p.Status, 
                 Punctuation = _context.ProductComments
                     .Where(c => c.ProductId == p.Id)
                     .Any()
