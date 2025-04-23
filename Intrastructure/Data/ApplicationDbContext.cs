@@ -19,7 +19,7 @@ namespace Intrastructure.Data
         public DbSet<ProductComment> ProductComments { get; set; }
         public DbSet<CartShop> CartShops { get; set; }
         public DbSet<CartShopDetail> CartShopDetails { get; set; }
-
+        public DbSet<Address> Addresses { get; set; }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
         }

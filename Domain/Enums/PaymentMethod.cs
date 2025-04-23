@@ -2,7 +2,7 @@
 
 public enum PaymentMethod
 {
-    Card,
+    Card= 1,
     PayPal,
     Transfer
 }
