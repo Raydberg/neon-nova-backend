@@ -101,19 +101,19 @@ public class CategoryService : ICategoryService
         return productoDTOs;
     }
 
-    public async Task<List<ProductWithFirstImageDTO>> GetProductsByCategoryWithFirstImageAsync(int categoryId)
+    public async Task<PaginatedResponseDto<ProductWithFirstImageDTO>> GetProductsByCategoryWithFirstImagePaginatedAsync(
+        int categoryId, int pageNumber, int pageSize)
     {
         var category = await _repository.GetByIdAsync(categoryId);
         if (category == null)
             throw new KeyNotFoundException($"Categoría con ID {categoryId} no encontrada");
 
-
-        var products = await _productRepository.GetAllWithCategoriesAsync();
-        var filteredProducts = products.Where(p => p.CategoryId == categoryId).ToList();
+        var pagedProducts =
+            await _productRepository.GetProductsByCategoryPaginatedAsync(categoryId, pageNumber, pageSize);
 
         var productDTOs = new List<ProductWithFirstImageDTO>();
 
-        foreach (var product in filteredProducts)
+        foreach (var product in pagedProducts.Items)
         {
             var images = await _productImageService.GetImagesProductIdAsync(product.Id);
             var firstImage = images.FirstOrDefault();
@@ -127,12 +127,20 @@ public class CategoryService : ICategoryService
                 Stock = product.Stock,
                 Status = product.Status,
                 CreatedAt = product.CreatedAt,
+                Punctuation = product.Punctuation,
                 Category = _mapper.Map<CategoryDto>(product.Category),
                 FirstImage = firstImage != null ? _mapper.Map<ProductImageDTO>(firstImage) : null
             });
         }
 
-        return productDTOs;
+        return new PaginatedResponseDto<ProductWithFirstImageDTO>
+        {
+            Items = productDTOs,
+            TotalItems = pagedProducts.TotalCount,
+            PageNumber = pagedProducts.PageNumber,
+            PageSize = pagedProducts.PageSize,
+            TotalPages = pagedProducts.TotalPages
+        };
     }
 
     public async Task DeleteCategoryAsync(int id)

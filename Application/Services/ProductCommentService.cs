@@ -11,16 +11,18 @@ namespace Application.Services
         private readonly IProductCommentRepository _repository;
         private readonly IMapper _mapper;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IProductRepository _productRepository;
         private IProductCommentService _productCommentServiceImplementation;
 
         public ProductCommentService (
             IProductCommentRepository repository,
             IMapper mapper,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,IProductRepository productRepository)
         {
             _repository = repository;
             _mapper = mapper;
             _currentUserService = currentUserService;
+            _productRepository = productRepository;
         }
 
 
@@ -46,6 +48,7 @@ namespace Application.Services
             };
 
             var created = await _repository.AddAsync(comment);
+            await _productRepository.UpdateProductPunctuationAsync(productId);
             return _mapper.Map<CommentDto>(created);
         }
 
@@ -106,6 +109,22 @@ namespace Application.Services
 
             // Convertir los comentarios a DTOs para devolver solo los datos necesarios
             return _mapper.Map<List<CommentDto>>(comments);
+        }
+
+        public async Task<PagedResult<CommentDto>> GetPaginatedCommentsByProductIdAsync(int productId, int pageNumber, int pageSize)
+        {
+            var pagedComments = await _repository.GetPaginatedCommentsByProductIdAsync(productId, pageNumber, pageSize);
+    
+            var commentDtos = _mapper.Map<List<CommentDto>>(pagedComments.Items);
+    
+            return new PagedResult<CommentDto>
+            {
+                Items = commentDtos,
+                PageNumber = pagedComments.PageNumber,
+                PageSize = pagedComments.PageSize,
+                TotalCount = pagedComments.TotalCount,
+                TotalPages = pagedComments.TotalPages
+            };
         }
     }
 }

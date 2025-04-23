@@ -1,4 +1,6 @@
-﻿namespace Application.DTOs.ProductsDTOs;
+﻿using Domain.Enums;
+
+namespace Application.DTOs.ProductsDTOs;
 
 public class ProductoSimplificadoDto
 {
@@ -7,6 +9,7 @@ public class ProductoSimplificadoDto
     public decimal Price { get; set; }
     public int CategoryId { get; set; }
     public string CategoryName { get; set; }
+    public ProductStatus Status { get; set; }
     public int? Punctuation { get; set; } = 0;
     public string ImageUrl { get; set; }
 }
