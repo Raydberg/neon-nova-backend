@@ -145,27 +145,22 @@ public class UserService : IUserService
         return true;
     }
 
-    public async Task<bool> DisableUserAsync(string userId)
+    public async Task UpdateUserStatusAsync(string userId, bool isEnabled)
     {
         var user = await _userRepository.GetUserByIdAsync(userId);
         if (user is null) throw new KeyNotFoundException("Usuario no encontrado");
-
-        //Desabilitar cuenta
-        user.LockoutEnabled = true;
-        user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+        if (isEnabled)
+        {
+            user.LockoutEnabled = false;
+            user.LockoutEnd = null;
+        }
+        else
+        {
+            user.LockoutEnabled = true;
+            user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+        }
 
         await _userManager.UpdateAsync(user);
-        return true;
     }
-
-    public async Task<bool> EnableUserAsync(string userId)
-    {
-        var user = await _userRepository.GetUserByIdAsync(userId);
-        if (user is null) throw new KeyNotFoundException("Usuario no encontrado");
-        //Habilitar cuenta
-        user.LockoutEnabled = false;
-        user.LockoutEnd = null;
-        await _userManager.UpdateAsync(user);
-        return true;
-    }
+    
 }

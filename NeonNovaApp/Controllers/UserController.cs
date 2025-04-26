@@ -93,13 +93,14 @@ public class UserController : ControllerBase
         }
     }
 
-    [HttpPut("{userId}/disable")]
-    // [Authorize(Policy = "isAdmin")]
-    public async Task<IActionResult> DisableUser(string userId)
+    
+    [HttpPut("{userId}/status")]
+// [Authorize(Policy = "isAdmin")]
+    public async Task<IActionResult> UpdateStatus(string userId, [FromBody] UserStatusUpdateDto dto)
     {
         try
         {
-            await _userService.DisableUserAsync(userId);
+            await _userService.UpdateUserStatusAsync(userId, dto.IsEnabled);
             return NoContent();
         }
         catch (KeyNotFoundException ex)
@@ -108,26 +109,7 @@ public class UserController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Error al deshabilitar usuario: {ex.Message}");
-        }
-    }
-
-    [HttpPut("{userId}/enable")]
-    // [Authorize(Policy = "isAdmin")]
-    public async Task<IActionResult> EnableUser(string userId)
-    {
-        try
-        {
-            await _userService.EnableUserAsync(userId);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Error al habilitar usuario: {ex.Message}");
+            return StatusCode(500, $"Error al actualizar estado del usuario: {ex.Message}");
         }
     }
 }
