@@ -24,7 +24,16 @@ public interface IProductService
     Task DeleteAsync(int id);
 
     Task<ProductImageDTO> UpdateImageAsync(int productId, int imageId, IFormFile image);
-    Task<PaginatedResponseDto<ProductoSimplificadoDto>> GetProductSimplified(int pageNumber , int pageSize);
+    Task<PaginatedResponseDto<ProductoSimplificadoDto>> GetProductSimplified(int pageNumber, int pageSize);
+
     Task<ProductWithPaginatedCommentsDto> GetProductWithPaginatedCommentsAsync(
         int productId, int commentsPage, int commentsPageSize);
+
+    Task<PaginatedResponseDto<ProductoSimplificadoDto>> GetProductsFormAdmin(
+        int pageNumber,
+        int pageSize,
+        int? categoryId = null,
+        ProductStatus? status = default,
+        string searchTerm = null
+    );
 }

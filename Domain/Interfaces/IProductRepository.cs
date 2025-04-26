@@ -16,6 +16,13 @@ namespace Domain.Interfaces
         Task<PagedResult<Product>> GetProductsByCategoryPaginatedAsync(int categoryId, int pageNumber, int pageSize);
         Task<IEnumerable<ProductSimplified>> GetAllProductSimplifiedAsync();
         Task UpdateProductPunctuationAsync(int productId);
+
+        Task<PagedResult<ProductSimplified>> GetProductsForAdminAsync(
+            int pageNumber,
+            int pageSize,
+            int? categoryId = null,
+            ProductStatus? status = null, string searchTerm = null);
+
         Task<PagedResult<ProductSimplified>> GetAllProductSimplifiedPaginatedAsync(int pageNumber, int pageSize);
     }
 }

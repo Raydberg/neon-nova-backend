@@ -301,7 +301,7 @@ public class ProductService : IProductService
         var pagedComments = await _productCommentService.GetPaginatedCommentsByProductIdAsync(
             productId, commentsPage, commentsPageSize);
 
-        
+
         int? punctuation = product.Punctuation;
         if (!punctuation.HasValue && pagedComments.Items.Any())
         {
@@ -316,7 +316,7 @@ public class ProductService : IProductService
             Price = product.Price,
             Stock = product.Stock,
             Status = product.Status,
-            Punctuation = punctuation, 
+            Punctuation = punctuation,
             Category = _mapper.Map<CategoryDto>(product.Category),
             CreatedAt = product.CreatedAt,
             Images = _mapper.Map<List<ProductImageDTO>>(images),
@@ -325,6 +325,38 @@ public class ProductService : IProductService
             CommentsPageNumber = pagedComments.PageNumber,
             CommentsPageSize = pagedComments.PageSize,
             CommentsTotalPages = pagedComments.TotalPages
+        };
+    }
+
+    public async Task<PaginatedResponseDto<ProductoSimplificadoDto>> GetProductsFormAdmin(
+        int pageNumber, 
+        int pageSize, 
+        int? categoryId = null, 
+        ProductStatus? status = default,
+        string searchTerm = null)
+    {
+        var simplifiedProducts = await _repository.GetProductsForAdminAsync(
+            pageNumber, pageSize, categoryId, status, searchTerm);
+
+        var productDtos = simplifiedProducts.Items.Select(p => new ProductoSimplificadoDto
+        {
+            Id = p.Id,
+            Name = p.Name,
+            Price = p.Price,
+            CategoryId = p.CategoryId,
+            CategoryName = p.CategoryName,
+            Punctuation = p.Punctuation,
+            Status = p.Status,
+            ImageUrl = p.ImageUrl
+        }).ToList();
+
+        return new PaginatedResponseDto<ProductoSimplificadoDto>
+        {
+            Items = productDtos,
+            TotalItems = simplifiedProducts.TotalCount,
+            PageNumber = simplifiedProducts.PageNumber,
+            PageSize = simplifiedProducts.PageSize,
+            TotalPages = simplifiedProducts.TotalPages
         };
     }
 }

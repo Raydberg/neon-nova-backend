@@ -18,6 +18,24 @@ public class ProductController : ControllerBase
         _productImageService = productImageService;
     }
 
+    [HttpGet("simplified-admin")]
+    public async Task<IActionResult> GetProductsForAdmin(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] int? categoryId = null,
+        [FromQuery] ProductStatus? status = null,
+        [FromQuery] string searchTerm = null
+    )
+    {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var products = await _productService.GetProductsFormAdmin(
+            pageNumber, pageSize, categoryId, status, searchTerm);
+
+        return Ok(products);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromForm] CreateProductRequestDTO dto)
     {
@@ -60,13 +78,12 @@ public class ProductController : ControllerBase
 
     [HttpGet("simplified")]
     public async Task<IActionResult> GetSimplifiedProducts(
-        [FromQuery] int pageNumber = 1 , [FromQuery] int pageSize = 10
-        )
+        [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10
+    )
     {
-
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
-        
+
         var products = await _productService.GetProductSimplified(pageNumber, pageSize);
         return Ok(products);
     }
