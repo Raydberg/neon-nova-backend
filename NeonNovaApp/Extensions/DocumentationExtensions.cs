@@ -47,8 +47,7 @@ public static class DocumentationExtensions
     {
         app.UseSwagger(opt => { opt.RouteTemplate = "openapi/{documentName}.json"; });
 
-        if (app.Environment.IsDevelopment())
-        {
+     
             app.MapOpenApi();
             app.UseSwagger();
             app.UseSwaggerUI(c =>
@@ -68,6 +67,6 @@ public static class DocumentationExtensions
                     .WithDefaultHttpClient(ScalarTarget.Http, ScalarClient.Http11)
                     .WithTheme(ScalarTheme.BluePlanet);
             });
-        }
+        
     }
 }
