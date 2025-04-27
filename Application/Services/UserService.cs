@@ -1,4 +1,5 @@
-﻿using Application.DTOs.UsersDTOs;
+﻿using System.Runtime.InteropServices;
+using Application.DTOs.UsersDTOs;
 using Application.Interfaces;
 using AutoMapper;
 using Domain.Entities;
@@ -31,12 +32,14 @@ public class UserService : IUserService
         foreach (var user in users)
         {
             var userDto = _mapper.Map<UserDto>(user);
-
             var claims = await _userManager.GetClaimsAsync(user);
-            userDto.IsAdmin = claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
 
+            userDto.IsAdmin = claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
             userDto.IsActive = !user.LockoutEnabled ||
                                (user.LockoutEnd == null || user.LockoutEnd < DateTimeOffset.UtcNow);
+
+            // Verificar si es una cuenta de Google
+            userDto.IsGoogleAccount = claims.Any(c => c.Type == "isGoogleAccount" && c.Value == "true");
 
             var pictureClaim = claims.FirstOrDefault(c => c.Type == "picture");
             if (!string.IsNullOrEmpty(pictureClaim?.Value))
@@ -48,10 +51,7 @@ public class UserService : IUserService
                 $"{user.FirstName?.Substring(0, 1 > user.FirstName?.Length ? user.FirstName?.Length ?? 0 : 1)}{user.LastName?.Substring(0, 1 > user.LastName?.Length ? user.LastName?.Length ?? 0 : 1)}"
                     .ToUpper();
 
-            // Fecha de creación
             userDto.CreatedAt = user.CreatedAt;
-
-            // Último login (necesitarás agregar este campo a tu entidad Users)
             userDto.LastLogin = user.LastLogin;
 
             userDtos.Add(userDto);
@@ -60,43 +60,35 @@ public class UserService : IUserService
         return userDtos;
     }
 
-    public async Task<object> GetCurrentUserAsync()
+    public async Task<UserDto> GetCurrentUserAsync()
     {
         var user = await _currentUserService.GetUser();
         if (user is null) return null;
 
+        var userDto = _mapper.Map<UserDto>(user);
         var claims = await _userManager.GetClaimsAsync(user);
-        var isAdmin = claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
-        var isUser = claims.Any(c => c.Type == "isUser" && c.Value == "true");
 
+        // Establecer propiedades adicionales
+        userDto.IsAdmin = claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
+        userDto.IsActive = !user.LockoutEnabled || (user.LockoutEnd == null || user.LockoutEnd < DateTimeOffset.UtcNow);
+        userDto.IsGoogleAccount = claims.Any(c => c.Type == "isGoogleAccount" && c.Value == "true");
+
+        // Configurar avatar
         var pictureClaim = claims.FirstOrDefault(c => c.Type == "picture");
-        string avatarUrl = null;
-
         if (!string.IsNullOrEmpty(pictureClaim?.Value))
         {
-            avatarUrl = $"/api/proxy/image?url={Uri.EscapeDataString(pictureClaim.Value)}";
+            userDto.AvatarUrl = $"/api/proxy/image?url={Uri.EscapeDataString(pictureClaim.Value)}";
         }
 
-        var initials =
+        // Configurar iniciales para avatar
+        userDto.InitialAvatar =
             $"{user.FirstName?.Substring(0, 1 > user.FirstName?.Length ? user.FirstName?.Length ?? 0 : 1)}{user.LastName?.Substring(0, 1 > user.LastName?.Length ? user.LastName?.Length ?? 0 : 1)}"
                 .ToUpper();
 
-        return new
-        {
-            id = user.Id,
-            email = user.Email,
-            name = $"{user.FirstName} {user.LastName}",
-            firstName = user.FirstName ?? string.Empty,
-            lastName = user.LastName ?? string.Empty,
-            phone = user.PhoneNumber,
-            avatarUrl = avatarUrl,
-            initials = initials,
-            permission = new
-            {
-                admin = isAdmin,
-                user = isUser
-            }
-        };
+        userDto.CreatedAt = user.CreatedAt;
+        userDto.LastLogin = user.LastLogin;
+
+        return userDto;
     }
 
     public async Task<UserDto> UpdateUserAsync(UserUpdateDto dto)
@@ -104,8 +96,48 @@ public class UserService : IUserService
         var user = await _currentUserService.GetUser();
         if (user is null) throw new KeyNotFoundException("Usuario no encontrado");
 
-        user.FirstName = dto.FirstName;
-        user.LastName = dto.LastName;
+        // Actualizar solo los campos proporcionados
+        if (!string.IsNullOrEmpty(dto.FirstName))
+            user.FirstName = dto.FirstName;
+
+        if (!string.IsNullOrEmpty(dto.LastName))
+            user.LastName = dto.LastName;
+
+        if (!string.IsNullOrEmpty(dto.Phone))
+            user.PhoneNumber = dto.Phone;
+
+        // Verificar si el usuario quiere actualizar el email
+        if (!string.IsNullOrEmpty(dto.Email) && dto.Email != user.Email)
+        {
+            // Verificar si es cuenta de Google
+            var claims = await _userManager.GetClaimsAsync(user);
+            bool isGoogleAccount = claims.Any(c => c.Type == "isGoogleAccount" && c.Value == "true");
+
+            if (isGoogleAccount)
+            {
+                throw new InvalidOperationException(
+                    "No se puede cambiar el correo electrónico de una cuenta de Google.");
+            }
+
+            // Verificar si el nuevo email ya está en uso
+            var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+            if (existingUser != null && existingUser.Id != user.Id)
+            {
+                throw new InvalidOperationException("El correo electrónico ya está en uso por otro usuario.");
+            }
+
+            // Actualizar el email
+            var token = await _userManager.GenerateChangeEmailTokenAsync(user, dto.Email);
+            var result = await _userManager.ChangeEmailAsync(user, dto.Email, token);
+
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException("No se pudo actualizar el correo electrónico: " +
+                                                    string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+
+            await _userManager.SetUserNameAsync(user, dto.Email);
+        }
 
         var updatedUser = await _userRepository.UpdateUserAsync(user);
         return _mapper.Map<UserDto>(updatedUser);
@@ -120,6 +152,7 @@ public class UserService : IUserService
         var claims = await _userManager.GetClaimsAsync(user);
         userDto.IsAdmin = claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
         userDto.IsActive = !user.LockoutEnabled || (user.LockoutEnd == null || user.LockoutEnd < DateTimeOffset.UtcNow);
+        userDto.IsGoogleAccount = claims.Any(c => c.Type == "isGoogleAccount" && c.Value == "true");
         var pictureClaim = claims.FirstOrDefault(c => c.Type == "picture");
         if (!string.IsNullOrEmpty(pictureClaim?.Value))
         {
@@ -162,5 +195,43 @@ public class UserService : IUserService
 
         await _userManager.UpdateAsync(user);
     }
-    
+
+    public async Task<UserDto> UpdateUserByAdminAsync(string userId, UserUpdateDto dto)
+    {
+        var user = await _userRepository.GetUserByIdAsync(userId);
+        if (user is null) throw new KeyNotFoundException("Usuario no encontrado");
+        if (!string.IsNullOrEmpty(dto.FirstName)) user.FirstName = dto.FirstName;
+        if (!string.IsNullOrEmpty(dto.LastName)) user.LastName = dto.LastName;
+        if (!string.IsNullOrEmpty(dto.Phone)) user.PhoneNumber = dto.Phone;
+        if (!string.IsNullOrEmpty(dto.Email) && dto.Email != user.Email)
+        {
+            var claims = await _userManager.GetClaimsAsync(user);
+            bool isGoogleAccount = claims.Any(c => c.Type == "isGoogleAccount" && c.Value == "true");
+            if (isGoogleAccount)
+            {
+                throw new InvalidOperationException(
+                    "No se puede cambiar el correo electrónico de una cuenta de Google.");
+            }
+
+            var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+            if (existingUser != null && existingUser.Id != user.Id)
+            {
+                throw new InvalidOperationException("El correo electronico ya esta en uso por otro usuario");
+            }
+
+            var token = await _userManager.GenerateChangeEmailTokenAsync(user, dto.Email);
+            var result = await _userManager.ChangeEmailAsync(user, dto.Email, token);
+
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException("No se pudo actualizar el correo electrónico: " +
+                                                    string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+
+            await _userManager.SetUserNameAsync(user, dto.Email);
+        }
+
+        var updateUser = await _userRepository.UpdateUserAsync(user);
+        return _mapper.Map<UserDto>(updateUser);
+    }
 }
