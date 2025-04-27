@@ -68,6 +68,33 @@ public class UserController : ControllerBase
         {
             return NotFound(ex.Message);
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error al actualizar usuario: {ex.Message}");
+        }
+    }
+
+    [HttpPut("admin/{userId}")]
+    // [Authorize(Policy = "isAdmin")]
+    public async Task<IActionResult> UpdateUserByAdmin(string userId, UserUpdateDto dto)
+    {
+        try
+        {
+            var userUpdate = await _userService.UpdateUserByAdminAsync(userId, dto);
+            return Ok(userUpdate);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
         catch (Exception ex)
         {
             return StatusCode(500, $"Error al actualizar usuario: {ex.Message}");
@@ -93,7 +120,7 @@ public class UserController : ControllerBase
         }
     }
 
-    
+
     [HttpPut("{userId}/status")]
 // [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> UpdateStatus(string userId, [FromBody] UserStatusUpdateDto dto)

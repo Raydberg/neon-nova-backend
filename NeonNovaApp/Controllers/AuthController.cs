@@ -71,29 +71,14 @@ public class AuthController : ControllerBase
         }
     }
 
-    [HttpPost("set-admin")]
-    // [Authorize(Policy = "isAdmin")]
-    public async Task<IActionResult> SetAdmin(EditClaimDto dto)
-    {
-        try
-        {
-            await _authService.SetAdmin(dto);
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            ModelState.AddModelError(string.Empty, ex.Message);
-            return ValidationProblem(ModelState);
-        }
-    }
 
-    [HttpPost("remove-admin")]
-    [Authorize(Policy = "isAdmin")]
-    public async Task<IActionResult> RemoveAdmin(EditClaimDto dto)
+    [HttpPut("admin-status")]
+    // [Authorize(Policy = "isAdmin")]
+    public async Task<IActionResult> UpdateAdminStatus([FromBody] AdminStatusUpdateDto dto)
     {
         try
         {
-            await _authService.RemoveAdmin(dto);
+            await _authService.UpdateAdminStatusAsync(dto.userId, dto.IsAdmin);
             return NoContent();
         }
         catch (Exception ex)
@@ -128,7 +113,7 @@ public class AuthController : ControllerBase
             return Ok(authResponse);
         }
 
-        if (returnUrl.StartsWith("http://localhost:4200") || 
+        if (returnUrl.StartsWith("http://localhost:4200") ||
             returnUrl.StartsWith("https://neonnova.netlify.app"))
         {
             return Redirect($"{returnUrl}?token={authResponse.Token}");

@@ -92,22 +92,7 @@ namespace Application.Services
             return await CreateToken(loginDto);
         }
 
-        public async Task SetAdmin(EditClaimDto dto)
-        {
-            var user = await _authRepository.FindUserByEmailAsync(dto.Email);
-            if (user is null) throw new Exception("Usuario no encontrado");
-
-            await _authRepository.AddClaimAsync(user, new Claim("isAdmin", "true"));
-        }
-
-        public async Task RemoveAdmin(EditClaimDto dto)
-        {
-            var user = await _authRepository.FindUserByEmailAsync(dto.Email);
-            if (user is null) throw new Exception("Usuario no encontrado");
-
-            await _authRepository.RemoveClaimAsync(user, new Claim("isAdmin", "true"));
-        }
-
+        
         public async Task<AuthenticationResponseDto> LoginWithGoogleAsync(ClaimsPrincipal claimsPrincipal)
         {
             if (claimsPrincipal is null)
@@ -156,7 +141,7 @@ namespace Application.Services
                 }
 
                 await _authRepository.AddClaimAsync(user, new Claim("isUser", "true"));
-
+                await _authRepository.AddClaimAsync(user, new Claim("isGoogleAccount", "true"));
                 if (!string.IsNullOrEmpty(pictureUrl))
                 {
                     await _authRepository.AddClaimAsync(user, new Claim("picture", pictureUrl));
@@ -172,6 +157,27 @@ namespace Application.Services
             };
 
             return await CreateToken(loginDto);
+        }
+
+        public async Task UpdateAdminStatusAsync(string userId, bool isAdmin)
+        {
+            var user = await _userRepository.GetUserByIdAsync(userId);
+            if (user is null) throw new KeyNotFoundException("Usuario no encontrado");
+            if (isAdmin)
+            {
+                var adminClaim = new Claim("isAdmin", "true");
+                await _authRepository.AddClaimAsync(user, adminClaim);
+            }
+            else
+            {
+                var adminClamin = new Claim("isAdmin", "true");
+                await _authRepository.RemoveClaimAsync(user, adminClamin);
+                var userClaims = await _authRepository.GetUserClaimsAsync(user);
+                if (!userClaims.Any(c => c.Type == "isUser" && c.Value == "true"))
+                {
+                    await _authRepository.AddClaimAsync(user, new Claim("isUser", "true"));
+                }
+            }
         }
 
         private async Task<AuthenticationResponseDto> CreateToken(LoginRequestDto dto)
