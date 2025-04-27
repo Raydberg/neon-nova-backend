@@ -1,14 +1,39 @@
-﻿using Application.DTOs.ProductsDTOs;
+﻿using Application.DTOs.Common;
+using Application.DTOs.ProductsDTOs;
+using Domain.Entities;
+using Domain.Enums;
+using Microsoft.AspNetCore.Http;
 
-namespace Application.Interfaces
+namespace Application.Interfaces;
+
+public interface IProductService
 {
-    // Cumple el papel de Use Cases 
-    public interface IProductService
-    {
-        Task<List<ProductDto>> GetAllAsync ();
-        Task<ProductDto> GetByIdAsync (int id);
-        Task AddAsync (CreateProductDto product);
-        Task UpdateAsync (UpdateProductDto product);
-        Task DeleteAsync (int id);
-    }
+    Task<List<ProductResponseDTO>> GetAllAsync();
+    Task<ProductResponseDTO> CreateAsync(CreateProductRequestDTO dto);
+
+    Task<ProductPaginatedResponseDto> GetAllPaginatedAsync(
+        int pageNumber, int pageSize, ProductStatus? status = null
+    );
+
+    Task<ProductWithCommentsPaginatedResponseDto> GetAllPaginatedWithCommentsAsync(
+        int pageNumber, int pageSize, ProductStatus? status = null
+    );
+
+    Task<ProductResponseDTO> GetByIdWithImagesAsync(int id);
+    Task<ProductResponseDTO> UpdateAsync(int id, UpdateProductRequestDTO dto);
+    Task DeleteAsync(int id);
+
+    Task<ProductImageDTO> UpdateImageAsync(int productId, int imageId, IFormFile image);
+    Task<PaginatedResponseDto<ProductoSimplificadoDto>> GetProductSimplified(int pageNumber, int pageSize);
+
+    Task<ProductWithPaginatedCommentsDto> GetProductWithPaginatedCommentsAsync(
+        int productId, int commentsPage, int commentsPageSize);
+
+    Task<PaginatedResponseDto<ProductoSimplificadoDto>> GetProductsFormAdmin(
+        int pageNumber,
+        int pageSize,
+        int? categoryId = null,
+        ProductStatus? status = default,
+        string searchTerm = null
+    );
 }

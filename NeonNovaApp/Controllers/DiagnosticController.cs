@@ -3,7 +3,7 @@
 namespace NeonNovaApp.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/diagnostic")]
     public class DiagnosticController : ControllerBase
     {
         [HttpGet]
