@@ -19,7 +19,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 var originsPermits = builder.Configuration.GetSection("origenesPermitidos").Get<string[]>()!;
 builder.Services.AddCors(opt =>
 {
-    opt.AddDefaultPolicy(optCors => { optCors.WithOrigins(originsPermits).AllowAnyMethod().AllowAnyHeader().AllowCredentials(); });
+    opt.AddDefaultPolicy(optCors =>
+    {
+        optCors.WithOrigins(originsPermits).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+    });
 });
 
 // Autenticación y autorización
@@ -48,6 +51,7 @@ builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
+await DataSeeder.SeedUsers(app.Services);
 // Middlewares
 
 app.UseCors();
