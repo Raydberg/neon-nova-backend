@@ -51,9 +51,7 @@ public class CheckoutRepository:ICheckoutRepository
         return await _db.Products.FindAsync(productId);
     }
 
-    /*
-     * No es necesario ya lo obtenermos al usuario por sesion
-     */
+    
 
     public async Task<Users?> GetUserByEmailAsync(string email)
     {
