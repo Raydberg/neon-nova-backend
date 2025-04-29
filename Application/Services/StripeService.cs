@@ -2,24 +2,38 @@
 using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.Extensions.Logging;
-using Stripe;
 using Stripe.Checkout;
-
-namespace Application.Services;
+using Stripe;
 
 public class StripeService : IStripeService
 {
     private readonly ILogger _logger;
+    private readonly StripeClient _stripeClient;
 
     public StripeService(ILogger<StripeService> logger)
     {
         _logger = logger;
+
+        var secretKey = Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY");
+        if (string.IsNullOrEmpty(secretKey))
+        {
+            throw new InvalidOperationException("Stripe secret key not configured in environment variables.");
+        }
+
+        _stripeClient = new StripeClient(secretKey);
     }
 
-
-    public Task<Customer> CreateCustomerAsync(string email, string name, string phone)
+    public async Task<Customer> CreateCustomerAsync(string email, string name, string phone)
     {
-        throw new NotImplementedException();
+        var options = new CustomerCreateOptions
+        {
+            Email = email,
+            Name = name,
+            Phone = phone
+        };
+
+        var service = new CustomerService(_stripeClient);
+        return await service.CreateAsync(options);
     }
 
     public async Task<PaymentMethod> CreatePaymentMethodAsync(CardInfo card)
@@ -36,22 +50,26 @@ public class StripeService : IStripeService
             }
         };
 
-        var service = new PaymentMethodService();
+        var service = new PaymentMethodService(_stripeClient);
         return await service.CreateAsync(options);
     }
 
-    public Task<PaymentIntent> ConfirmPaymentIntentAsync(string customerId, long amount, string currency,
-        string paymentMethodId)
+    public async Task<PaymentIntent> ConfirmPaymentIntentAsync(string customerId, long amount, string currency, string paymentMethodId)
     {
-        throw new NotImplementedException();
+        var options = new PaymentIntentCreateOptions
+        {
+            Customer = customerId,
+            Amount = amount,
+            Currency = currency,
+            PaymentMethod = paymentMethodId,
+            Confirm = true
+        };
+
+        var service = new PaymentIntentService(_stripeClient);
+        return await service.CreateAsync(options);
     }
 
-    public async Task<Session> CreateCheckoutSessionAsync(
-        CheckoutSessionRequestDto request,
-        decimal shippingCost,
-        string shippingLabel,
-        string successUrl,
-        string cancelUrl)
+    public async Task<Session> CreateCheckoutSessionAsync(CheckoutSessionRequestDto request, decimal shippingCost, string shippingLabel, string successUrl, string cancelUrl)
     {
         var options = new SessionCreateOptions
         {
@@ -98,7 +116,7 @@ public class StripeService : IStripeService
             }
         };
 
-        var service = new SessionService();
+        var service = new SessionService(_stripeClient);
         return await service.CreateAsync(options);
     }
 
@@ -109,7 +127,7 @@ public class StripeService : IStripeService
 
     public async Task<Session> GetSessionAsync(string sessionId)
     {
-        var service = new SessionService();
+        var service = new SessionService(_stripeClient);
         return await service.GetAsync(sessionId);
     }
 }

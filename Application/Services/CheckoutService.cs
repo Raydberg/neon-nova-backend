@@ -114,28 +114,38 @@ public class CheckoutService : ICheckoutService
 
         if (stripeEvent.Type == "checkout.session.completed")
         {
-            var session = stripeEvent.Data.Object as Session;
+            var session = stripeEvent.Data.Object as Stripe.Checkout.Session;
             if (session == null) return false;
 
-            _logger.LogInformation("Webhook recibido de Stripe para: {Email}", session.CustomerEmail);
+            // ✅ Buscar el usuario directamente por Email del Session
+            var user = await _repository.GetUserByEmailAsync(session.CustomerEmail);
+            if (user == null)
+            {
+                _logger.LogError("❌ Usuario no encontrado para el email {Email}", session.CustomerEmail);
+                return false;
+            }
+            var userId = user.Id;
 
-            var user = await _currentUserService.GetUser();
-            var userId = user!.Id;
-
-
+            // ✅ Buscar el carrito activo de ese usuario
             var cart = await _repository.GetActiveCartByUserIdAsync(userId);
-            if (cart is null) return false;
+            if (cart == null)
+            {
+                _logger.LogError("❌ No se encontró carrito activo para el usuario {UserId}", userId);
+                return false;
+            }
 
+            // ✅ Buscar la última dirección de envío
             var shippingAddress = await _repository.GetLatestShippingAddressByUserIdAsync(userId);
 
+            // ✅ Crear la orden
             var order = new Order
             {
                 UserId = userId,
                 Date = DateTime.UtcNow,
-                Total = (decimal)(session.AmountTotal / 100.0)!,
+                Total = (decimal)(session.AmountTotal / 100.0),
                 Status = OrderStatus.Paid,
                 ShippingAddressId = shippingAddress?.Id,
-                ShippingAddress = shippingAddress!
+                ShippingAddress = shippingAddress
             };
 
             foreach (var item in cart.CartShopDetails)
@@ -156,15 +166,17 @@ public class CheckoutService : ICheckoutService
                 PaymentStatus = PaymentStatus.Success
             });
 
-            cart.Status = CartShopStatus.Completed;
+            // ✅ Guardar orden y actualizar carrito
             await _repository.SaveOrderAsync(order);
             await _repository.UpdateCartStatusAsync(cart);
 
-            _logger.LogInformation("Orden con dirección guardada correctamente con ID {OrderId}", order.Id);
+            _logger.LogInformation("✅ Orden guardada correctamente con ID {OrderId}", order.Id);
         }
 
         return true;
     }
+
+
 
     public async Task<object> GetSessionDetailsAsync(string sessionId)
     {
@@ -173,9 +185,13 @@ public class CheckoutService : ICheckoutService
 
     public async Task SaveCartAsync(SaveCartDto dto)
     {
+        var user = await _currentUserService.GetUser();
+        if (user is null)
+            throw new UnauthorizedAccessException("Usuario no autenticado.");
+
         var cart = new CartShop
         {
-            UserId = dto.UserId,
+            UserId = user.Id, // 🔥 Aquí usamos el usuario logueado
             CreationDate = DateTime.UtcNow,
             Status = CartShopStatus.Active
         };
@@ -196,4 +212,5 @@ public class CheckoutService : ICheckoutService
 
         await _repository.SaveCartAsync(cart);
     }
+
 }

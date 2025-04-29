@@ -9,7 +9,8 @@ public interface ICheckoutRepository
     Task<Address> GetLatestShippingAddressByUserIdAsync(string userId);
     Task<bool> ProductExistsAsync(int productId);
     Task<Product> GetProductByIdAsync(int productId);
-    // Task<Users> GetUserByEmailAsync(string email);
+    Task<Users?> GetUserByEmailAsync(string email);
+
     Task SaveCartAsync(CartShop cart);
     Task SaveOrderAsync(Order order);
     Task UpdateCartStatusAsync(CartShop cart);

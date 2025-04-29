@@ -1,9 +1,14 @@
 using System.Text.Json.Serialization;
+using Application.Interfaces;
+using Application.Services;
+using Domain.Interfaces;
 using DotNetEnv;
 using Intrastructure.Data;
+using Intrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using NeonNovaApp.Extensions;
 using NeonNovaApp.Middleware;
+using NeonNovaApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +35,20 @@ builder.Services.AddHttpServices();
 builder.Services.AddApplicationServices();
 builder.Services.AddMappingConfiguration();
 
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IStripeService, StripeService>();
+builder.Services.AddScoped<ICartShopService, CartShopService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>(); // 🔥 aquí agregas esto
+
+
+
+
+
+
+
+
 // Documentación
 builder.Services.AddDocumentationServices();
 
@@ -49,8 +68,14 @@ builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
 
 // Middlewares
+app.UseRouting();
+app.UseCors("YourCorsPolicyName");
 
-app.UseCors();
+// Permitir que Webhook de Stripe llegue sin HTTPS (pruab local)
+app.UseWhen(context => !context.Request.Path.StartsWithSegments("/api/checkout/webhook"), appBuilder =>
+{
+    appBuilder.UseHttpsRedirection();
+});
 
 // Configuración de documentación
 app.UseDocumentationMiddleware();
@@ -65,3 +90,4 @@ app.UseMonitoringMiddleware();
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/scalar"));
 app.Run();
+
