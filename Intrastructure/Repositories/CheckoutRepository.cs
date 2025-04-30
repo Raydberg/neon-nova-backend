@@ -51,14 +51,14 @@ public class CheckoutRepository:ICheckoutRepository
         return await _db.Products.FindAsync(productId);
     }
 
-    /*
-     * No es necesario ya lo obtenermos al usuario por sesion
-     */
     
-    // public async Task<Users> GetUserByEmailAsync(string email)
-    // {
-    //     return await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
-    // }
+
+    public async Task<Users?> GetUserByEmailAsync(string email)
+    {
+        return await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+    }
+
+
 
     public async Task SaveCartAsync(CartShop cart)
     {
@@ -68,9 +68,19 @@ public class CheckoutRepository:ICheckoutRepository
 
     public async Task SaveOrderAsync(Order order)
     {
-        _db.Orders.Add(order);
-        await _db.SaveChangesAsync();
+        try
+        {
+            _db.Orders.Add(order);
+            await _db.SaveChangesAsync();
+            Console.WriteLine("✅ Orden guardada correctamente");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error al guardar orden: {ex.Message}");
+            throw;
+        }
     }
+
 
     public async Task UpdateCartStatusAsync(CartShop cart)
     {

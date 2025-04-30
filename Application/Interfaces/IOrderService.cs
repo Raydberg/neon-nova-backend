@@ -1,6 +1,9 @@
-﻿namespace Application.Interfaces;
+﻿using Application.DTOs.OrderDTOs;
 
-public class IOrderService
+namespace Application.Interfaces
 {
-    
+    public interface IOrderService
+    {
+        Task<List<OrderDto>> GetOrdersForCurrentUserAsync();
+    }
 }
