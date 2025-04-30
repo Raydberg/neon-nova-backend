@@ -20,24 +20,24 @@ Env.Load();
 builder.Configuration.AddEnvironmentVariables();
 
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-  .AddJwtBearer(options =>
-  {
-      options.TokenValidationParameters = new TokenValidationParameters
-      {
-          ValidateIssuer = true,
-          ValidIssuer = builder.Configuration["Jwt:Issuer"],
-
-          ValidateAudience = true,
-          ValidAudience = builder.Configuration["Jwt:Audience"],
-
-          ValidateLifetime = true,
-
-          ValidateIssuerSigningKey = true,
-          IssuerSigningKey = new SymmetricSecurityKey(
-           Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]))
-      };
-  });
+// builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//   .AddJwtBearer(options =>
+//   {
+//       options.TokenValidationParameters = new TokenValidationParameters
+//       {
+//           ValidateIssuer = true,
+//           ValidIssuer = builder.Configuration["Jwt:Issuer"],
+//
+//           ValidateAudience = true,
+//           ValidAudience = builder.Configuration["Jwt:Audience"],
+//
+//           ValidateLifetime = true,
+//
+//           ValidateIssuerSigningKey = true,
+//           IssuerSigningKey = new SymmetricSecurityKey(
+//            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]))
+//       };
+//   });
 
 
 
