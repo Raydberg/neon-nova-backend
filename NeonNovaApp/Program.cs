@@ -51,10 +51,9 @@ builder.Services.AddCors(opt =>
 {
     opt.AddDefaultPolicy(optCors =>
     {
-        optCors.WithOrigins(originsPermits)
-               .AllowAnyMethod()
-               .AllowAnyHeader()
-               .AllowCredentials();
+
+        optCors.WithOrigins(originsPermits).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+
     });
 });
 
@@ -89,6 +88,10 @@ builder.Services.AddControllers()
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
+
+
+await DataSeeder.SeedUsers(app.Services);
+// Middlewares
 
 
 app.UseGlobalExceptionHandler();

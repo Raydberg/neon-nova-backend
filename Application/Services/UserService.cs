@@ -87,7 +87,7 @@ public class UserService : IUserService
 
         userDto.CreatedAt = user.CreatedAt;
         userDto.LastLogin = user.LastLogin;
-
+        userDto.Phone = user.PhoneNumber!;
         return userDto;
     }
 

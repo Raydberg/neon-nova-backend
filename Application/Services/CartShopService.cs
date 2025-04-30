@@ -52,6 +52,15 @@ public class CartShopService : ICartShopService
         }
 
         var cartDto = await MapCartToDto(cart);
+        foreach (var detail in cartDto.Details)
+        {
+            var product = await _productRepository.GetByIdAsync(detail.ProductId);
+            if (product != null)
+            {
+                detail.Stock = product.Stock;
+            }
+        }
+
         //Actualizar cache
         _memoryCache.Set(cacheKey, cartDto, TimeSpan.FromMinutes(20));
         return cartDto;

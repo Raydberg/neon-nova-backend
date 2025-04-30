@@ -7,7 +7,7 @@ namespace NeonNovaApp.Controllers
 {
     [ApiController]
     [Route("api/comments")]
-    [Authorize]
+    // [Authorize]
     public class ProductCommentsController : ControllerBase
     {
         private readonly IProductCommentService _commentService;
