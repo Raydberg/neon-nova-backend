@@ -18,6 +18,7 @@ namespace Application.Services
         private readonly ICurrentUserService _currentUserService;
         private readonly IUserRepository _userRepository;
 
+
         public AuthService(IAuthRepository authRepository,
             SignInManager<Users> signInManager,
             ICurrentUserService currentUserService, IUserRepository userRepository)
@@ -26,6 +27,7 @@ namespace Application.Services
             _signInManager = signInManager;
             _currentUserService = currentUserService;
             _userRepository = userRepository;
+
         }
 
         public async Task<AuthenticationResponseDto> Register(CredentialsUserDto dto)
@@ -186,7 +188,17 @@ namespace Application.Services
             {
                 new Claim("email", dto.Email)
             };
+
+
+
+
             var user = await _authRepository.FindUserByEmailAsync(dto.Email);
+
+
+            // 🟢 Agregá este claim con el ID del usuario
+            claims.Add(new Claim(ClaimTypes.NameIdentifier, user!.Id));
+
+
             var claimsDB = await _authRepository.GetUserClaimsAsync(user!);
             claims.AddRange(claimsDB);
             var keyJwt = Environment.GetEnvironmentVariable("key_jwt");

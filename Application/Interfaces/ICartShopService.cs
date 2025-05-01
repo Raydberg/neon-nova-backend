@@ -8,7 +8,10 @@ public interface ICartShopService
     Task<CartShopDto> AddToCartAsync(AddToCartShopDto dto);
     Task<CartShopDto> UpdateCartItemAsync(UpdateCartShopItemDto dto);
     Task<CartShopDto> RemoveCartItemAsync(int cartDetailId);
-    Task<bool> ClearCartAsync();
+   
     Task<bool> CompleteCartAsync();
     Task<CartShopDto> RefreshCartAsync();
+
+    Task<bool> ClearCartAsync();
+    Task ClearCartAsync(string userId); //se agrego 
 }

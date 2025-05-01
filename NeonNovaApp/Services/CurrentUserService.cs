@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 namespace NeonNovaApp.Services;
 
@@ -17,9 +18,17 @@ public class CurrentUserService : ICurrentUserService
 
     public async Task<Users?> GetUser()
     {
-        var emailClaim = _contextAccessor.HttpContext!.User.Claims.Where(c => c.Type == "email").FirstOrDefault();
-        if (emailClaim is null) return null;
-        var email = emailClaim.Value;
-        return await _userManager.FindByEmailAsync(email);
+        var userIdClaim = _contextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+        {
+            Console.WriteLine("No user ID claim found.");
+            return null;
+        }
+
+        Console.WriteLine($"User ID found: {userIdClaim.Value}");
+        return await _userManager.FindByIdAsync(userIdClaim.Value);
     }
+
+
+
 }

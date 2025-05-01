@@ -52,6 +52,15 @@ public class CartShopService : ICartShopService
         }
 
         var cartDto = await MapCartToDto(cart);
+        foreach (var detail in cartDto.Details)
+        {
+            var product = await _productRepository.GetByIdAsync(detail.ProductId);
+            if (product != null)
+            {
+                detail.Stock = product.Stock;
+            }
+        }
+
         //Actualizar cache
         _memoryCache.Set(cacheKey, cartDto, TimeSpan.FromMinutes(20));
         return cartDto;
@@ -79,9 +88,17 @@ public class CartShopService : ICartShopService
         if (product is null)
             throw new KeyNotFoundException($"Producto {dto.ProductId} no encontrado");
 
+        // Validar el stock
+        if (product.Stock < dto.Quantity)
+            throw new ApplicationException($"No hay suficiente stock para el producto '{product.Name}'");
+
         var existingItem = cart.CartShopDetails.FirstOrDefault(d => d.ProductId == dto.ProductId);
         if (existingItem != null)
         {
+            // Validar el stock nuevamente si el producto ya está en el carrito
+            if (product.Stock < existingItem.Quantity + dto.Quantity)
+                throw new ApplicationException($"No hay suficiente stock para el producto '{product.Name}'");
+
             existingItem.Quantity += dto.Quantity;
         }
         else
@@ -146,16 +163,30 @@ public class CartShopService : ICartShopService
         _memoryCache.Set(string.Format(CartCacheKey, user.Id), cartDto, TimeSpan.FromMinutes(20));
         return cartDto;
     }
-
+    // Implementación del ClearCartAsync() sin parámetros
     public async Task<bool> ClearCartAsync()
     {
         var user = await _currentUserService.GetUser();
-        if (user is null) throw new UnauthorizedAccessException("Usuario no autenticado");
-        var cart = await _cartShopRepository.GetActiveCartByUserIdAsync(user.Id);
-        if (cart is null) return true;
-        await _cartShopRepository.ClearCartDetailsAsync(cart.Id);
-        _memoryCache.Remove(string.Format(CartCacheKey, user.Id));
+        if (user == null) throw new UnauthorizedAccessException();
+        await ClearCartAsync(user.Id);
         return true;
+    }
+
+    public async Task ClearCartAsync(string userId)
+    {
+        var cart = await _cartShopRepository.GetActiveCartByUserIdAsync(userId);
+        if (cart != null)
+        {
+            // Eliminar todos los detalles del carrito
+            await _cartShopRepository.ClearCartDetailsAsync(cart.Id);
+
+            // Marcar el carrito como inactivo o completado
+            cart.Status = CartShopStatus.Inactive;
+            await _cartShopRepository.UpdateCartAsync(cart);
+
+            // Limpiar la caché del carrito
+            _memoryCache.Remove($"UserCart_{userId}");
+        }
     }
 
     public async Task<bool> CompleteCartAsync()

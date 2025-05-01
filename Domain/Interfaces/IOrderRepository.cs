@@ -7,6 +7,8 @@ public interface IOrderRepository
     Task<Order> GetById(int id);
     Task<IEnumerable<Order>> GetAll();
     Task<IEnumerable<Order>> GetByUser(int userId);
+    Task<IEnumerable<Order>> GetByUser(string userId);
+
     Task<Order> Add(Order entity);
     Task Update(Order entity);
     Task Delete(int id);
