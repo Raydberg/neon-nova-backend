@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.CheckoutDTOs;
 using Application.Interfaces;
 using Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace NeonNovaApp.Controllers;
@@ -93,6 +94,7 @@ public class CheckoutController : ControllerBase
     }
 
     [HttpPost("webhook")]
+    [AllowAnonymous]
     public async Task<IActionResult> StripeWebhook()
     {
         var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
