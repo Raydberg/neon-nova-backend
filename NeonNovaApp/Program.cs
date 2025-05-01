@@ -100,10 +100,10 @@ await DataSeeder.SeedUsers(app.Services);
 app.UseGlobalExceptionHandler();
 
 
-app.UseWhen(context => !context.Request.Path.StartsWithSegments("/api/checkout/webhook"),
-    appBuilder => appBuilder.UseHttpsRedirection());
+// app.UseWhen(context => !context.Request.Path.StartsWithSegments("/api/checkout/webhook"),
+//     appBuilder => appBuilder.UseHttpsRedirection());
 
-
+app.UseHttpsRedirection();
 
 
 

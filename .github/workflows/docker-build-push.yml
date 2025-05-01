@@ -54,3 +54,6 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ASPNETCORE_URLS=https://+:443;http://+:80
+            ASPNETCORE_HTTPS_PORT=443
