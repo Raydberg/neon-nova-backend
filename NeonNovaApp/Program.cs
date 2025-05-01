@@ -8,6 +8,7 @@ using Intrastructure.Data;
 using Intrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using NeonNovaApp.Extensions;
 using NeonNovaApp.Middleware;
@@ -46,14 +47,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 
+// CORS: permite solicitudes desde Angular
 var originsPermits = builder.Configuration.GetSection("origenesPermitidos").Get<string[]>()!;
-builder.Services.AddCors(opt =>
+builder.Services.AddCors(options =>
 {
-    opt.AddDefaultPolicy(optCors =>
+    options.AddPolicy("AllowAngular", builder =>
     {
-
-        optCors.WithOrigins(originsPermits).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
-
+        builder.WithOrigins(originsPermits)
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .AllowCredentials();
     });
 });
 
@@ -101,8 +104,11 @@ app.UseWhen(context => !context.Request.Path.StartsWithSegments("/api/checkout/w
     appBuilder => appBuilder.UseHttpsRedirection());
 
 
+
+
+
 app.UseRouting();
-app.UseCors(); 
+app.UseCors("AllowAngular"); 
 
 app.UseAuthentication();
 app.UseAuthorization();
