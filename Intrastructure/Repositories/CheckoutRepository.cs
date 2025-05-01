@@ -92,4 +92,27 @@ public class CheckoutRepository:ICheckoutRepository
     {
         await _db.SaveChangesAsync();
     }
+    public async Task ClearCartAsync(string userId)
+    {
+        // Buscar el carrito activo del usuario
+        var cart = await _db.CartShops
+            .Include(c => c.CartShopDetails) // Incluir los detalles del carrito
+            .FirstOrDefaultAsync(c => c.UserId == userId && c.Status == CartShopStatus.Active);
+
+        if (cart != null)
+        {
+            // Opción 1: Eliminar todos los detalles del carrito
+            _db.CartShopDetails.RemoveRange(cart.CartShopDetails);
+            cart.Status = CartShopStatus.Inactive;
+            await _db.SaveChangesAsync();
+        }
+    }
+
+
+    // Método para actualizar el stock del producto
+    public async Task UpdateProductStock(Product product)
+    {
+        _db.Products.Update(product);
+        await _db.SaveChangesAsync();
+    }
 }

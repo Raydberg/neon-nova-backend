@@ -14,7 +14,11 @@ namespace Application.DTOs.CheckoutDTOs
         public long ShippingCost { get; set; }    
         public string CustomerEmail { get; set; } 
 
-        public string CustomerPhone { get; set; } 
+        public string CustomerPhone { get; set; }
+
+        // Nuevas propiedades para las URLs de redirección
+        public string SuccessUrl { get; set; } = string.Empty;
+        public string CancelUrl { get; set; } = string.Empty;
     }
 
     public class LineItemDto

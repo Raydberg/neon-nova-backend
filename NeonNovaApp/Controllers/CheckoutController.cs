@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.CheckoutDTOs;
 using Application.Interfaces;
+using Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace NeonNovaApp.Controllers;
@@ -10,13 +11,16 @@ public class CheckoutController : ControllerBase
 {
     private readonly ICheckoutService _checkoutService;
     private readonly ILogger<CheckoutController> _logger;
+    private readonly ICartShopService _cartShopService; // Se añade la interfaz ICartShopService
 
     public CheckoutController(
-        ICheckoutService checkoutService, 
-        ILogger<CheckoutController> logger)
+        ICheckoutService checkoutService,
+        ILogger<CheckoutController> logger,
+         ICartShopService cartShopService) // Se añade el servicio
     {
         _checkoutService = checkoutService;
         _logger = logger;
+        _cartShopService = cartShopService; // Se asigna el servicio
     }
 
     [HttpPost("personal-info")]
@@ -68,6 +72,12 @@ public class CheckoutController : ControllerBase
         
         try
         {
+            // Definir las URLs de éxito y cancelación
+            req.SuccessUrl = "http://localhost:4200/success?session_id={CHECKOUT_SESSION_ID}";
+            req.CancelUrl = "http://localhost:4200/cancel";
+
+
+
             var url = await _checkoutService.CreateCheckoutSessionAsync(req);
             return Ok(new { url });
         }
@@ -86,10 +96,24 @@ public class CheckoutController : ControllerBase
     public async Task<IActionResult> StripeWebhook()
     {
         var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
-        
+
         try
         {
             var success = await _checkoutService.ProcessWebhookAsync(json, Request.Headers["Stripe-Signature"]);
+
+            if (success)
+            {
+                // Obtener el userId del webhook o del contexto actual
+                var user = await _checkoutService.GetCurrentUserAsync(); // Asegúrate de implementar este método
+                var userId = user?.Id;
+
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    // Si el pago fue exitoso, limpiar el carrito
+                    await _cartShopService.ClearCartAsync(userId);
+                }
+            }
+
             return success ? Ok() : BadRequest();
         }
         catch (Exception ex)

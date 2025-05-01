@@ -16,17 +16,25 @@ public class CheckoutService : ICheckoutService
     private readonly ILogger<CheckoutService> _logger;
     private readonly IMapper _mapper;
     private readonly ICurrentUserService _currentUserService;
+    private readonly ICartShopService _cartShopService;
+
+
 
     public CheckoutService(ICheckoutRepository repository, IStripeService stripeService,
-        ILogger<CheckoutService> logger, IMapper mapper, ICurrentUserService currentUserService)
+        ILogger<CheckoutService> logger, IMapper mapper, ICurrentUserService currentUserService, ICartShopService cartShopService)
     {
         _repository = repository;
         _stripeService = stripeService;
         _logger = logger;
         _mapper = mapper;
         _currentUserService = currentUserService;
+        _cartShopService = cartShopService;
     }
 
+    public async Task<Users> GetCurrentUserAsync()
+    {
+        return await _currentUserService.GetUser();
+    }
     public async Task<int> SavePersonalInfoAsync(PersonalInfoDto dto)
     {
         var user = await _currentUserService.GetUser();
@@ -100,8 +108,8 @@ public class CheckoutService : ICheckoutService
             request,
             shippingCost,
             shippingLabel,
-            "http://localhost:5173/success?session_id={CHECKOUT_SESSION_ID}",
-            "http://localhost:5173/cancel");
+            "http://localhost:4200/success?session_id={CHECKOUT_SESSION_ID}",
+             "http://localhost:4200/cancel");
 
         _logger.LogInformation("Sesión de Stripe creada correctamente. URL: {Url}", session.Url);
         return session.Url;
@@ -117,7 +125,7 @@ public class CheckoutService : ICheckoutService
             var session = stripeEvent.Data.Object as Stripe.Checkout.Session;
             if (session == null) return false;
 
-            // ✅ Buscar el usuario directamente por Email del Session
+            // Buscar el usuario  por Email
             var user = await _repository.GetUserByEmailAsync(session.CustomerEmail);
             if (user == null)
             {
@@ -126,7 +134,7 @@ public class CheckoutService : ICheckoutService
             }
             var userId = user.Id;
 
-            // ✅ Buscar el carrito activo de ese usuario
+            //  Buscar el carrito activo de ese usuario
             var cart = await _repository.GetActiveCartByUserIdAsync(userId);
             if (cart == null)
             {
@@ -156,6 +164,18 @@ public class CheckoutService : ICheckoutService
                     Quantity = item.Quantity,
                     UnitPrice = item.UnitPrice
                 });
+                // Actualizar el stock del producto en la base de datos
+                var product = await _repository.GetProductByIdAsync(item.ProductId);
+                if (product != null && product.Stock >= item.Quantity)
+                {
+                    product.Stock -= item.Quantity; // Reducir el stock
+                    _repository.UpdateProductStock(product); // Guardar cambios
+                }
+                else
+                {
+                    _logger.LogError($"❌ Stock insuficiente para el producto con ID {item.ProductId}");
+                    return false; // Cancelar la transacción si no hay suficiente stock
+                }
             }
 
             order.Transactions.Add(new Transaction
@@ -169,6 +189,8 @@ public class CheckoutService : ICheckoutService
             // ✅ Guardar orden y actualizar carrito
             await _repository.SaveOrderAsync(order);
             await _repository.UpdateCartStatusAsync(cart);
+            // Limpiar el carrito
+            await _cartShopService.ClearCartAsync(userId);
 
             _logger.LogInformation("✅ Orden guardada correctamente con ID {OrderId}", order.Id);
         }
