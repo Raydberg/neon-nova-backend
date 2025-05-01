@@ -73,8 +73,8 @@ public class CheckoutController : ControllerBase
         try
         {
             // Definir las URLs de éxito y cancelación
-            req.SuccessUrl = "http://localhost:4200/success?session_id={CHECKOUT_SESSION_ID}";
-            req.CancelUrl = "http://localhost:4200/cancel";
+            req.SuccessUrl = "https://neonnova.netlify.app/success?session_id={CHECKOUT_SESSION_ID}";
+            req.CancelUrl = "https://neonnova.netlify.app/cancel";
 
 
 

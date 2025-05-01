@@ -108,8 +108,8 @@ public class CheckoutService : ICheckoutService
             request,
             shippingCost,
             shippingLabel,
-            "http://localhost:4200/success?session_id={CHECKOUT_SESSION_ID}",
-             "http://localhost:4200/cancel");
+            "https://neonnova.netlify.app/success?session_id={CHECKOUT_SESSION_ID}",
+             "https://neonnova.netlify.app/cancel");
 
         _logger.LogInformation("Sesión de Stripe creada correctamente. URL: {Url}", session.Url);
         return session.Url;
