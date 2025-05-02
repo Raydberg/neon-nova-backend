@@ -19,6 +19,7 @@ builder.WebHost.ConfigureKestrel(opts =>
 {
     opts.Limits.MaxRequestBodySize = null;
 });
+builder.WebHost.UseUrls("http://0.0.0.0:8080");
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders =
