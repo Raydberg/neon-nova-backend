@@ -1,13 +1,7 @@
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-WORKDIR /app
-EXPOSE 8080
+# Stage 1: stripe-cli image (for tunneling webhooks)
+FROM stripe/stripe-cli:latest AS stripecli
 
-
-# Configuración de entorno predeterminada
-ENV ASPNETCORE_URLS=http://+:8080
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-ENV ASPNETCORE_ENVIRONMENT=Production
-
+# Stage 2: build .NET app
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY ["NeonNovaApp/NeonNovaApp.csproj", "NeonNovaApp/"]
@@ -17,14 +11,28 @@ COPY ["Intrastructure/Intrastructure.csproj", "Intrastructure/"]
 RUN dotnet restore "NeonNovaApp/NeonNovaApp.csproj"
 COPY . .
 WORKDIR "/src/NeonNovaApp"
-RUN dotnet build "NeonNovaApp.csproj" -c Release -o /app/build
-
-FROM build AS publish
 RUN dotnet publish "NeonNovaApp.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-FROM base AS final
+# Stage 3: final image combining stripe-cli and .NET runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
 
-# Punto de entrada directo para la aplicación
-ENTRYPOINT ["dotnet", "NeonNovaApp.dll"]
+# Copy .NET app
+COPY --from=build /app/publish .
+
+# Copy stripe-cli binary into final image
+COPY --from=stripecli /usr/local/bin/stripe /usr/local/bin/stripe
+
+# Expose your app port (HTTP internal)
+EXPOSE 8080
+
+# Environment variables
+ENV ASPNETCORE_URLS=http://+:8080
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+# Entrypoint: run stripe CLI in background and then the .NET app
+ENTRYPOINT ["/bin/sh", "-c", \
+  "stripe listen \
+    --api-key sk_test_51REXg2Q5WnNR8adIyhPCCAawzBPBDCGqG0s9MRt3Dcxblb37zPC9GCyN0R2n3svSpSSTueLl8QerEOOcf8sg0pRO00iRAwPPDm \
+    --forward-to http://localhost:${PORT:-8080}/api/checkout/webhook & \" dotnet NeonNovaApp.dll"]
