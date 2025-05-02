@@ -25,6 +25,7 @@ public static class ApplicationServicesExtensions
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ICartShopService, CartShopService>();
         services.AddScoped<IProductCommentService, ProductCommentService>();
+        services.AddScoped<IDashboardService, DashboardService>();
 
 
         // Registrar Repositorios
@@ -36,7 +37,7 @@ public static class ApplicationServicesExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICartShopRepository, CartShopRepository>();
         services.AddScoped<IProductCommentRepository, ProductCommentRepository>();
-        
+        services.AddScoped<IDashboardRepository, DashboardRepository>();
 
         return services;
     }
