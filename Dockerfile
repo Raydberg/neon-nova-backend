@@ -1,38 +1,50 @@
-# Stage 1: stripe-cli image (for tunneling webhooks)
+# ────────────────────────────────────────────────────────────────────────────
+# Stage 1: stripe-cli image (para tunelizar webhooks)
 FROM stripe/stripe-cli:latest AS stripecli
 
-# Stage 2: build .NET app
+# ────────────────────────────────────────────────────────────────────────────
+# Stage 2: Compila tu aplicación .NET
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
+
+# Copia y restaura proyectos
 COPY ["NeonNovaApp/NeonNovaApp.csproj", "NeonNovaApp/"]
 COPY ["Application/Application.csproj", "Application/"]
 COPY ["Domain/Domain.csproj", "Domain/"]
 COPY ["Intrastructure/Intrastructure.csproj", "Intrastructure/"]
 RUN dotnet restore "NeonNovaApp/NeonNovaApp.csproj"
+
+# Copia todo el código y publica en modo Release
 COPY . .
 WORKDIR "/src/NeonNovaApp"
-RUN dotnet publish "NeonNovaApp.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "NeonNovaApp.csproj" \
+    -c Release \
+    -o /app/publish \
+    /p:UseAppHost=false
 
-# Stage 3: final image combining stripe-cli and .NET runtime
+# ────────────────────────────────────────────────────────────────────────────
+# Stage 3: Imagen final combinada
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 
-# Copy .NET app
+# 1) Copia la app .NET ya compilada
 COPY --from=build /app/publish .
 
-# Copy stripe-cli binary into final image
-COPY --from=stripecli /usr/local/bin/stripe /usr/local/bin/stripe
+# 2) Copia el binario de stripe-cli desde su ruta real
+COPY --from=stripecli /bin/stripe /usr/local/bin/stripe
 
-# Expose your app port (HTTP internal)
+# Exponer el puerto interno HTTP
 EXPOSE 8080
 
-# Environment variables
+# Variables de entorno para Kestrel y producción
 ENV ASPNETCORE_URLS=http://+:8080
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 ENV ASPNETCORE_ENVIRONMENT=Production
 
-# Entrypoint: run stripe CLI in background and then the .NET app
-ENTRYPOINT ["/bin/sh", "-c", \
-  "stripe listen \
+# ENTRYPOINT: arranca Stripe CLI en background y luego tu app .NET
+ENTRYPOINT ["/bin/sh", "-c", "\
+  stripe listen \
     --api-key $STRIPE_SECRET_KEY \
-    --forward-to http://localhost:${PORT:-8080}/api/checkout/webhook & \" dotnet NeonNovaApp.dll"]
+    --forward-to http://localhost:8080/api/checkout/webhook & \
+  dotnet NeonNovaApp.dll\
+"]
