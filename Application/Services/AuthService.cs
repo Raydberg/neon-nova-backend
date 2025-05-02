@@ -67,6 +67,12 @@ namespace Application.Services
         {
             var user = await _authRepository.FindUserByEmailAsync(dto.Email);
             if (user is null) throw new Exception("Login Incorrecto");
+
+            if (user.LockoutEnabled && (user.LockoutEnd == null || user.LockoutEnd > DateTimeOffset.UtcNow))
+            {
+                throw new UnauthorizedAccessException("Esta cuenta ha sido desactivada por un administrador.");
+            }
+
             user.LastLogin = DateTime.UtcNow;
             await _userRepository.UpdateUserAsync(user);
             var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password!, false);
@@ -85,6 +91,11 @@ namespace Application.Services
             var user = await _currentUserService.GetUser();
             if (user is null) throw new Exception("Usuario no encontrado");
 
+            if (user.LockoutEnabled && (user.LockoutEnd == null || user.LockoutEnd > DateTimeOffset.UtcNow))
+            {
+                throw new UnauthorizedAccessException("Esta cuenta ha sido desactivada por un administrador.");
+            }
+
             var loginDto = new LoginRequestDto
             {
                 Email = user.Email!,
@@ -94,7 +105,7 @@ namespace Application.Services
             return await CreateToken(loginDto);
         }
 
-        
+
         public async Task<AuthenticationResponseDto> LoginWithGoogleAsync(ClaimsPrincipal claimsPrincipal)
         {
             if (claimsPrincipal is null)
@@ -148,6 +159,11 @@ namespace Application.Services
                 {
                     await _authRepository.AddClaimAsync(user, new Claim("picture", pictureUrl));
                 }
+            }
+
+            if (user.LockoutEnabled && user.LockoutEnd > DateTimeOffset.UtcNow)
+            {
+                throw new UnauthorizedAccessException("Esta cuenta ha sido desactivada por un administrador.");
             }
 
             user.LastLogin = DateTime.UtcNow;
