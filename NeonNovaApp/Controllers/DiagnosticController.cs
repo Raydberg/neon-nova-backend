@@ -34,6 +34,53 @@ namespace NeonNovaApp.Controllers
             });
         }
 
+        [HttpGet("webhook-config")]
+        public IActionResult WebhookConfig()
+        {
+            var stripeWebhookSecret = Environment.GetEnvironmentVariable("STRIPE_WEBHOOK_SECRET");
+            var stripeSecretKey = Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY");
+
+            return Ok(new
+            {
+                webhookSecretConfigured = !string.IsNullOrEmpty(stripeWebhookSecret),
+                stripeKeyConfigured = !string.IsNullOrEmpty(stripeSecretKey),
+                forwardedProto = Request.Headers["X-Forwarded-Proto"].FirstOrDefault(),
+                forwardedFor = Request.Headers["X-Forwarded-For"].FirstOrDefault(),
+                host = Request.Host.Value,
+                isHttps = Request.IsHttps,
+                scheme = Request.Scheme
+            });
+        }
+
+        [HttpPost("webhook-test")]
+        public async Task<IActionResult> TestWebhook()
+        {
+            var requestData = new
+            {
+                timestamp = DateTime.UtcNow,
+                headers = Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString()),
+                isHttps = Request.IsHttps,
+                scheme = Request.Scheme
+            };
+
+            // Leer el cuerpo si existe
+            string body = "No body";
+            if (Request.ContentLength.HasValue && Request.ContentLength > 0)
+            {
+                Request.EnableBuffering();
+                Request.Body.Position = 0;
+                body = await new StreamReader(Request.Body).ReadToEndAsync();
+                Request.Body.Position = 0;
+            }
+
+            return Ok(new
+            {
+                message = "Webhook test received successfully",
+                requestData,
+                body
+            });
+        }
+
         [HttpGet("health")]
         public IActionResult Health()
         {
