@@ -106,19 +106,36 @@ public class AuthController : ControllerBase
             return Unauthorized();
         }
 
-        var authResponse = await _authService.LoginWithGoogleAsync(result.Principal);
-
-        if (returnUrl.Contains("token") || string.IsNullOrEmpty(returnUrl) || returnUrl == "/")
+        try
         {
-            return Ok(authResponse);
-        }
+            var authResponse = await _authService.LoginWithGoogleAsync(result.Principal);
 
-        if (returnUrl.StartsWith("http://localhost:4200") ||
-            returnUrl.StartsWith("https://neonnova.netlify.app"))
+            if (returnUrl.Contains("token") || string.IsNullOrEmpty(returnUrl) || returnUrl == "/")
+            {
+                return Ok(authResponse);
+            }
+
+            if (returnUrl.StartsWith("http://localhost:4200") ||
+                returnUrl.StartsWith("https://neonnova.netlify.app"))
+            {
+                return Redirect($"{returnUrl}?token={authResponse.Token}");
+            }
+
+            return Redirect(returnUrl);
+        }
+        catch (UnauthorizedAccessException ex)
         {
-            return Redirect($"{returnUrl}?token={authResponse.Token}");
-        }
+            if (returnUrl.StartsWith("http://localhost:4200") ||
+                returnUrl.StartsWith("https://neonnova.netlify.app"))
+            {
+                return Redirect($"{returnUrl}?error={Uri.EscapeDataString(ex.Message)}");
+            }
 
-        return Redirect(returnUrl);
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
 }
