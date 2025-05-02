@@ -12,10 +12,8 @@ namespace Application.Mappings
             CreateMap<UpdateCommentDto, ProductComment>();
             CreateMap<ProductComment, CommentDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName));
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName))
+                .ForMember(dest => dest.AvatarUrl, opt => opt.Ignore());
         }
-        
-
     }
-    
 }
