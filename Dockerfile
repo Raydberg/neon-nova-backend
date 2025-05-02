@@ -1,10 +1,12 @@
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
-EXPOSE 80
+EXPOSE 8080
 EXPOSE 443
 
-ENV ASPNETCORE_URLS=http://+:80
+# Configuración de entorno predeterminada
+ENV ASPNETCORE_URLS=http://+:8080
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+ENV ASPNETCORE_ENVIRONMENT=Production
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
@@ -23,4 +25,6 @@ RUN dotnet publish "NeonNovaApp.csproj" -c Release -o /app/publish /p:UseAppHost
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
+# Punto de entrada directo para la aplicación
 ENTRYPOINT ["dotnet", "NeonNovaApp.dll"]
