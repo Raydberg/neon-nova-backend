@@ -21,6 +21,19 @@ namespace NeonNovaApp.Controllers
             return Ok(new { message = "API funcionando correctamente", timestamp = DateTime.UtcNow });
         }
 
+        [HttpGet("https")]
+        public IActionResult CheckHttps()
+        {
+            return Ok(new
+            {
+                isHttps = Request.IsHttps,
+                scheme = Request.Scheme,
+                host = Request.Host.Value,
+                pathBase = Request.PathBase.Value,
+                path = Request.Path.Value
+            });
+        }
+
         [HttpGet("health")]
         public IActionResult Health()
         {
