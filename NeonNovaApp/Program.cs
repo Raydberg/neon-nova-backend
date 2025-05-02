@@ -19,14 +19,14 @@ builder.WebHost.ConfigureKestrel(opts =>
 {
     opts.Limits.MaxRequestBodySize = null;
 });
-builder.WebHost.UseUrls("http://0.0.0.0:8080");
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders =
-        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownNetworks.Clear();
-    options.KnownProxies.Clear();
-});
+// builder.WebHost.UseUrls("http://0.0.0.0:8080");
+// builder.Services.Configure<ForwardedHeadersOptions>(options =>
+// {
+//     options.ForwardedHeaders =
+//         ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+//     options.KnownNetworks.Clear();
+//     options.KnownProxies.Clear();
+// });
 Env.Load();
 
 
@@ -102,15 +102,15 @@ builder.Services.AddControllers()
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor
-});
-app.Use(async (context, next) =>
-{
-    context.Request.EnableBuffering();  // Bufferiza el cuerpo en memoria o disco si supera 30 KB :contentReference[oaicite:1]{index=1}
-    await next();
-});
+// app.UseForwardedHeaders(new ForwardedHeadersOptions
+// {
+//     ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor
+// });
+// app.Use(async (context, next) =>
+// {
+//     context.Request.EnableBuffering();  
+//     await next();
+// });
 
 await DataSeeder.SeedUsers(app.Services);
 // Middlewares
