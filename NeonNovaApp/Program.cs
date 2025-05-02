@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using NeonNovaApp.Extensions;
 using NeonNovaApp.Middleware;
 using NeonNovaApp.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 Env.Load();
@@ -41,7 +42,6 @@ builder.Configuration.AddEnvironmentVariables();
 //   });
 
 
-
 var connectionString = Environment.GetEnvironmentVariable("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -54,14 +54,14 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAngular", builder =>
     {
         builder.WithOrigins(originsPermits)
-               .AllowAnyMethod()
-               .AllowAnyHeader()
-               .AllowCredentials();
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
 
-builder.Services.AddAuthenticationConfiguration(); 
+builder.Services.AddAuthenticationConfiguration();
 
 
 builder.Services.AddHttpServices();
@@ -102,13 +102,14 @@ app.UseGlobalExceptionHandler();
 
 // app.UseWhen(context => !context.Request.Path.StartsWithSegments("/api/checkout/webhook"),
 //     appBuilder => appBuilder.UseHttpsRedirection());
-
-app.UseHttpsRedirection();
-
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 
 app.UseRouting();
-app.UseCors("AllowAngular"); 
+app.UseCors("AllowAngular");
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -123,6 +124,3 @@ app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/scalar"));
 
 app.Run();
-
-
-

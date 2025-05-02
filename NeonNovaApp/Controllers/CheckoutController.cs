@@ -17,7 +17,7 @@ public class CheckoutController : ControllerBase
     public CheckoutController(
         ICheckoutService checkoutService,
         ILogger<CheckoutController> logger,
-         ICartShopService cartShopService) // Se añade el servicio
+        ICartShopService cartShopService) // Se añade el servicio
     {
         _checkoutService = checkoutService;
         _logger = logger;
@@ -31,7 +31,7 @@ public class CheckoutController : ControllerBase
 
         try
         {
-            _logger.LogInformation("📦 Dirección recibida: {Street}, {City}, {Postal}", 
+            _logger.LogInformation("📦 Dirección recibida: {Street}, {City}, {Postal}",
                 dto.Address.Street, dto.Address.City, dto.Address.PostalCode);
 
             var addressId = await _checkoutService.SavePersonalInfoAsync(dto);
@@ -49,7 +49,7 @@ public class CheckoutController : ControllerBase
     public async Task<IActionResult> SetPaymentMethod([FromBody] PaymentMethodDto dto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        
+
         try
         {
             var paymentMethodId = await _checkoutService.CreatePaymentMethodAsync(dto);
@@ -70,13 +70,12 @@ public class CheckoutController : ControllerBase
     public async Task<IActionResult> CreateCheckoutSession([FromBody] CheckoutSessionRequestDto req)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        
+
         try
         {
             // Definir las URLs de éxito y cancelación
             req.SuccessUrl = "https://neonnova.netlify.app/success?session_id={CHECKOUT_SESSION_ID}";
             req.CancelUrl = "https://neonnova.netlify.app/cancel";
-
 
 
             var url = await _checkoutService.CreateCheckoutSessionAsync(req);
@@ -97,21 +96,26 @@ public class CheckoutController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> StripeWebhook()
     {
+        // Get the raw request body
         var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
 
         try
         {
+            _logger.LogInformation("Webhook received");
+
+            // Use X-Forwarded-Proto header to check if the original request was HTTPS
+            var originalScheme = Request.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? "http";
+            _logger.LogInformation($"Original scheme: {originalScheme}");
+
             var success = await _checkoutService.ProcessWebhookAsync(json, Request.Headers["Stripe-Signature"]);
 
             if (success)
             {
-                // Obtener el userId del webhook o del contexto actual
-                var user = await _checkoutService.GetCurrentUserAsync(); // Asegúrate de implementar este método
+                var user = await _checkoutService.GetCurrentUserAsync();
                 var userId = user?.Id;
 
                 if (!string.IsNullOrEmpty(userId))
                 {
-                    // Si el pago fue exitoso, limpiar el carrito
                     await _cartShopService.ClearCartAsync(userId);
                 }
             }
