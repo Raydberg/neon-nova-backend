@@ -182,6 +182,7 @@ public class UserService : IUserService
     {
         var user = await _userRepository.GetUserByIdAsync(userId);
         if (user is null) throw new KeyNotFoundException("Usuario no encontrado");
+
         if (isEnabled)
         {
             user.LockoutEnabled = false;
