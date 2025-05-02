@@ -20,13 +20,14 @@ builder.WebHost.ConfigureKestrel(opts =>
     opts.Limits.MaxRequestBodySize = null;
 });
 // builder.WebHost.UseUrls("http://0.0.0.0:8080");
-// builder.Services.Configure<ForwardedHeadersOptions>(options =>
-// {
-//     options.ForwardedHeaders =
-//         ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-//     options.KnownNetworks.Clear();
-//     options.KnownProxies.Clear();
-// });
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Si lo deseas, limpia KnownNetworks/Proxies para confiar en cualquiera:
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 Env.Load();
 
 
@@ -102,7 +103,7 @@ builder.Services.AddControllers()
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
-// app.UseForwardedHeaders(new ForwardedHeadersOptions
+app.UseForwardedHeaders();
 // {
 //     ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor
 // });
