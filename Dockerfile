@@ -34,5 +34,5 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 # Entrypoint: run stripe CLI in background and then the .NET app
 ENTRYPOINT ["/bin/sh", "-c", \
   "stripe listen \
-    --api-key sk_test_51REXg2Q5WnNR8adIyhPCCAawzBPBDCGqG0s9MRt3Dcxblb37zPC9GCyN0R2n3svSpSSTueLl8QerEOOcf8sg0pRO00iRAwPPDm \
+    --api-key $STRIPE_SECRET_KEY \
     --forward-to http://localhost:${PORT:-8080}/api/checkout/webhook & \" dotnet NeonNovaApp.dll"]
