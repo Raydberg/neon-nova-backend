@@ -96,18 +96,33 @@ public class CheckoutController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> StripeWebhook()
     {
-        // Get the raw request body
-        var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+        using var reader = new StreamReader(Request.Body, leaveOpen: true);
+        var json = await reader.ReadToEndAsync();
+        Request.Body.Position = 0;  
 
         try
         {
             _logger.LogInformation("Webhook received");
 
-            // Use X-Forwarded-Proto header to check if the original request was HTTPS
-            var originalScheme = Request.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? "http";
-            _logger.LogInformation($"Original scheme: {originalScheme}");
+            // Use X-Forwarded-Proto header to determine if the original request was HTTPS
+            // Azure Container Apps agrega este encabezado cuando termina SSL
+            var forwardedProto = Request.Headers["X-Forwarded-Proto"].FirstOrDefault();
+            var isSecure = forwardedProto == "https" || Request.IsHttps;
 
-            var success = await _checkoutService.ProcessWebhookAsync(json, Request.Headers["Stripe-Signature"]);
+            _logger.LogInformation(
+                $"Esquema: {Request.Scheme}, Forwarded-Proto: {forwardedProto}, Es seguro: {isSecure}");
+
+            if (!isSecure)
+            {
+                _logger.LogWarning("Webhook recibido a través de HTTP inseguro - Stripe requiere HTTPS");
+                // Stripe requiere HTTPS, pero si estamos detrás de un proxy/load balancer
+                // que termina SSL, podemos continuar ya que la conexión externa es segura
+            }
+
+            var signature = Request.Headers["Stripe-Signature"];
+            _logger.LogInformation($"Signature recibida: {(string.IsNullOrEmpty(signature) ? "No" : "Sí")}");
+
+            var success = await _checkoutService.ProcessWebhookAsync(json, signature);
 
             if (success)
             {
