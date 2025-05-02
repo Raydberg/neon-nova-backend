@@ -3,6 +3,7 @@ using Application.Interfaces;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Identity;
 
 namespace Application.Services
 {
@@ -12,17 +13,20 @@ namespace Application.Services
         private readonly IMapper _mapper;
         private readonly ICurrentUserService _currentUserService;
         private readonly IProductRepository _productRepository;
-        private IProductCommentService _productCommentServiceImplementation;
+        private readonly UserManager<Users> _userManager;
 
-        public ProductCommentService (
+        public ProductCommentService(
             IProductCommentRepository repository,
             IMapper mapper,
-            ICurrentUserService currentUserService,IProductRepository productRepository)
+            ICurrentUserService currentUserService,
+            IProductRepository productRepository,
+            UserManager<Users> userManager)
         {
             _repository = repository;
             _mapper = mapper;
             _currentUserService = currentUserService;
             _productRepository = productRepository;
+            _userManager = userManager;
         }
 
 
@@ -31,17 +35,16 @@ namespace Application.Services
             var user = await _currentUserService.GetUser();
             if (user == null)
                 throw new InvalidOperationException("Usuario no autenticado.");
-            
+
             var userId = user.Id;
 
-            // Verificar si el usuario ya comentó este producto
             if (await _repository.ExistsByProductAndUserAsync(productId, userId))
                 throw new InvalidOperationException("Ya has comentado este producto.");
 
             var comment = new ProductComment
             {
                 ProductId = productId,
-                UserId = userId,  
+                UserId = userId,
                 Comment = dto.Comment,
                 Rating = dto.Rating,
                 Date = DateTime.UtcNow
@@ -49,7 +52,11 @@ namespace Application.Services
 
             var created = await _repository.AddAsync(comment);
             await _productRepository.UpdateProductPunctuationAsync(productId);
-            return _mapper.Map<CommentDto>(created);
+
+            var commentDto = _mapper.Map<CommentDto>(created);
+            commentDto.AvatarUrl = await GetUserAvatarUrlAsync(userId);
+
+            return commentDto;
         }
 
         public async Task<CommentDto> UpdateCommentAsync(int commentId, UpdateCommentDto dto)
@@ -58,26 +65,24 @@ namespace Application.Services
             if (user == null)
                 throw new InvalidOperationException("Usuario no autenticado.");
 
-            var userId = user.Id; // Directamente como string
+            var userId = user.Id;
 
-            // Obtener el comentario por el commentId
             var comment = await _repository.GetByIdAsync(commentId);
             if (comment == null)
                 throw new KeyNotFoundException("No existe tu comentario para actualizar.");
 
-            // Verifica que el comentario pertenezca al usuario autenticado
             if (comment.UserId != userId)
                 throw new KeyNotFoundException("No existe tu comentario para actualizar.");
 
-            // Mapear los cambios del DTO al comentario
             _mapper.Map(dto, comment);
             comment.Date = DateTime.UtcNow;
 
-            // Actualizar el comentario en la base de datos
             var updated = await _repository.UpdateAsync(comment);
 
-            // Mapear el comentario actualizado a DTO y devolverlo
-            return _mapper.Map<CommentDto>(updated);
+            var commentDto = _mapper.Map<CommentDto>(updated);
+            commentDto.AvatarUrl = await GetUserAvatarUrlAsync(comment.UserId);
+
+            return commentDto;
         }
         public async Task DeleteCommentAsync(int id)
         {
@@ -102,21 +107,44 @@ namespace Application.Services
         {
             return await _repository.ExistsByProductAndUserAsync(productId, userId);
         }
+
         public async Task<List<CommentDto>> GetCommentsByProductIdAsync(int productId)
         {
-            // Obtener los comentarios desde el repositorio, en lugar de _context
             var comments = await _repository.GetCommentsByProductIdAsync(productId);
+            var commentDtos = _mapper.Map<List<CommentDto>>(comments);
 
-            // Convertir los comentarios a DTOs para devolver solo los datos necesarios
-            return _mapper.Map<List<CommentDto>>(comments);
+            foreach (var dto in commentDtos)
+            {
+                dto.AvatarUrl = await GetUserAvatarUrlAsync(dto.UserId);
+            }
+
+            return commentDtos;
         }
+        private async Task<string> GetUserAvatarUrlAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return null;
 
+            var claims = await _userManager.GetClaimsAsync(user);
+            var pictureClaim = claims.FirstOrDefault(c => c.Type == "picture");
+
+            if (!string.IsNullOrEmpty(pictureClaim?.Value))
+            {
+                return $"/api/proxy/image?url={Uri.EscapeDataString(pictureClaim.Value)}";
+            }
+            return null;
+        }
         public async Task<PagedResult<CommentDto>> GetPaginatedCommentsByProductIdAsync(int productId, int pageNumber, int pageSize)
         {
             var pagedComments = await _repository.GetPaginatedCommentsByProductIdAsync(productId, pageNumber, pageSize);
-    
             var commentDtos = _mapper.Map<List<CommentDto>>(pagedComments.Items);
-    
+
+            // Añadir URLs de avatares para cada comentario
+            foreach (var dto in commentDtos)
+            {
+                dto.AvatarUrl = await GetUserAvatarUrlAsync(dto.UserId);
+            }
+
             return new PagedResult<CommentDto>
             {
                 Items = commentDtos,

@@ -96,20 +96,24 @@ public class UserService : IUserService
         var user = await _currentUserService.GetUser();
         if (user is null) throw new KeyNotFoundException("Usuario no encontrado");
 
-        // Actualizar solo los campos proporcionados
         if (!string.IsNullOrEmpty(dto.FirstName))
             user.FirstName = dto.FirstName;
 
         if (!string.IsNullOrEmpty(dto.LastName))
             user.LastName = dto.LastName;
 
-        if (!string.IsNullOrEmpty(dto.Phone))
-            user.PhoneNumber = dto.Phone;
+        if (!string.IsNullOrEmpty(dto.Phone) && dto.Phone != user.PhoneNumber)
+        {
+            var phoneResult = await _userManager.SetPhoneNumberAsync(user, dto.Phone);
+            if (!phoneResult.Succeeded)
+            {
+                throw new InvalidOperationException("No se pudo actualizar el número de teléfono: " +
+                                                string.Join(", ", phoneResult.Errors.Select(e => e.Description)));
+            }
+        }
 
-        // Verificar si el usuario quiere actualizar el email
         if (!string.IsNullOrEmpty(dto.Email) && dto.Email != user.Email)
         {
-            // Verificar si es cuenta de Google
             var claims = await _userManager.GetClaimsAsync(user);
             bool isGoogleAccount = claims.Any(c => c.Type == "isGoogleAccount" && c.Value == "true");
 
@@ -119,26 +123,25 @@ public class UserService : IUserService
                     "No se puede cambiar el correo electrónico de una cuenta de Google.");
             }
 
-            // Verificar si el nuevo email ya está en uso
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser != null && existingUser.Id != user.Id)
             {
                 throw new InvalidOperationException("El correo electrónico ya está en uso por otro usuario.");
             }
 
-            // Actualizar el email
             var token = await _userManager.GenerateChangeEmailTokenAsync(user, dto.Email);
             var result = await _userManager.ChangeEmailAsync(user, dto.Email, token);
 
             if (!result.Succeeded)
             {
                 throw new InvalidOperationException("No se pudo actualizar el correo electrónico: " +
-                                                    string.Join(", ", result.Errors.Select(e => e.Description)));
+                                                string.Join(", ", result.Errors.Select(e => e.Description)));
             }
 
             await _userManager.SetUserNameAsync(user, dto.Email);
         }
 
+        await _userManager.UpdateAsync(user);
         var updatedUser = await _userRepository.UpdateUserAsync(user);
         return _mapper.Map<UserDto>(updatedUser);
     }
@@ -148,7 +151,7 @@ public class UserService : IUserService
         var user = await _userRepository.GetUserByIdAsync(userId);
         if (user is null) throw new KeyNotFoundException("Usuario no encontrado");
         var userDto = _mapper.Map<UserDto>(user);
-
+        userDto.Phone = user.PhoneNumber!;
         var claims = await _userManager.GetClaimsAsync(user);
         userDto.IsAdmin = claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
         userDto.IsActive = !user.LockoutEnabled || (user.LockoutEnd == null || user.LockoutEnd < DateTimeOffset.UtcNow);
@@ -201,9 +204,21 @@ public class UserService : IUserService
     {
         var user = await _userRepository.GetUserByIdAsync(userId);
         if (user is null) throw new KeyNotFoundException("Usuario no encontrado");
+
         if (!string.IsNullOrEmpty(dto.FirstName)) user.FirstName = dto.FirstName;
         if (!string.IsNullOrEmpty(dto.LastName)) user.LastName = dto.LastName;
-        if (!string.IsNullOrEmpty(dto.Phone)) user.PhoneNumber = dto.Phone;
+
+        if (!string.IsNullOrEmpty(dto.Phone) && dto.Phone != user.PhoneNumber)
+        {
+            var phoneResult = await _userManager.SetPhoneNumberAsync(user, dto.Phone);
+            if (!phoneResult.Succeeded)
+            {
+                throw new InvalidOperationException("No se pudo actualizar el número de teléfono: " +
+                                                  string.Join(", ", phoneResult.Errors.Select(e => e.Description)));
+            }
+        }
+
+        // Actualizar correo electrónico
         if (!string.IsNullOrEmpty(dto.Email) && dto.Email != user.Email)
         {
             var claims = await _userManager.GetClaimsAsync(user);
@@ -226,12 +241,13 @@ public class UserService : IUserService
             if (!result.Succeeded)
             {
                 throw new InvalidOperationException("No se pudo actualizar el correo electrónico: " +
-                                                    string.Join(", ", result.Errors.Select(e => e.Description)));
+                                                  string.Join(", ", result.Errors.Select(e => e.Description)));
             }
 
             await _userManager.SetUserNameAsync(user, dto.Email);
         }
 
+        await _userManager.UpdateAsync(user);
         var updateUser = await _userRepository.UpdateUserAsync(user);
         return _mapper.Map<UserDto>(updateUser);
     }
