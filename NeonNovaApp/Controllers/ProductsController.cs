@@ -78,13 +78,16 @@ public class ProductController : ControllerBase
 
     [HttpGet("simplified")]
     public async Task<IActionResult> GetSimplifiedProducts(
-        [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] int? categoryId = null,
+        [FromQuery] string searchTerm = null
     )
     {
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
 
-        var products = await _productService.GetProductSimplified(pageNumber, pageSize);
+        var products = await _productService.GetProductSimplified(pageNumber, pageSize, categoryId, searchTerm);
         return Ok(products);
     }
 

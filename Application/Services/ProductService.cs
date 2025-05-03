@@ -264,9 +264,13 @@ public class ProductService : IProductService
     }
 
 
-    public async Task<PaginatedResponseDto<ProductoSimplificadoDto>> GetProductSimplified(int pageNumber, int pageSize)
+    public async Task<PaginatedResponseDto<ProductoSimplificadoDto>> GetProductSimplified(
+     int pageNumber,
+     int pageSize,
+     int? categoryId = null,
+     string searchTerm = null)
     {
-        var simplifiedProducts = await _repository.GetAllProductSimplifiedPaginatedAsync(pageNumber, pageSize);
+        var simplifiedProducts = await _repository.GetAllProductSimplifiedPaginatedAsync(pageNumber, pageSize, categoryId, searchTerm);
 
         var productDtos = simplifiedProducts.Items.Select(p => new ProductoSimplificadoDto
         {
@@ -329,9 +333,9 @@ public class ProductService : IProductService
     }
 
     public async Task<PaginatedResponseDto<ProductoSimplificadoDto>> GetProductsFormAdmin(
-        int pageNumber, 
-        int pageSize, 
-        int? categoryId = null, 
+        int pageNumber,
+        int pageSize,
+        int? categoryId = null,
         ProductStatus? status = default,
         string searchTerm = null)
     {
