@@ -13,4 +13,6 @@ public interface IAuthRepository
     Task AddClaimAsync(Users user, Claim claim);
     Task RemoveClaimAsync(Users user, Claim claim);
     Task AddRoleAsync(Users users, string role);
+    Task UpdatePictureClaimAsync(Users user, string pictureUrl);
+    Task<bool> HasPictureClaimAsync(Users user, string pictureUrl);
 }

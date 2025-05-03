@@ -56,45 +56,7 @@ public class CartShopController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
-
-    // [HttpPut]
-    // public async Task<ActionResult<CartShopDto>> UpdateCartItem([FromBody] UpdateCartShopItemDto dto)
-    // {
-    //     try
-    //     {
-    //         // Validación básica en el controlador
-    //         if (dto.Quantity <= 0)
-    //         {
-    //             return BadRequest(new { message = "La cantidad debe ser mayor que cero" });
-    //         }
-
-    //         var cart = await _cartShopService.UpdateCartItemAsync(dto);
-    //         return Ok(cart);
-    //     }
-    //     catch (UnauthorizedAccessException ex)
-    //     {
-    //         return Unauthorized(ex.Message);
-    //     }
-    //     catch (KeyNotFoundException ex)
-    //     {
-    //         return NotFound(ex.Message);
-    //     }
-    //     catch (ArgumentException ex)
-    //     {
-    //         return BadRequest(new { message = ex.Message });
-    //     }
-    //     catch (ApplicationException ex)
-    //     {
-    //         return BadRequest(new { message = ex.Message });
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         return StatusCode(500, new { message = "Error interno del servidor", detail = ex.Message });
-    //     }
-    // }
-    // Eliminar el método PUT actual
-
-    // Nuevo endpoint para incrementar
+    
     [HttpPost("increment/{id}")]
     public async Task<ActionResult<CartShopDto>> IncrementCartItem(int id)
     {
@@ -121,7 +83,6 @@ public class CartShopController : ControllerBase
         }
     }
 
-    // Nuevo endpoint para decrementar
     [HttpPost("decrement/{id}")]
     public async Task<ActionResult<CartShopDto>> DecrementCartItem(int id)
     {
