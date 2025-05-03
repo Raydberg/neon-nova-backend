@@ -2,6 +2,7 @@ using Application.DTOs.CategoryDTOs;
 using Application.DTOs.Common;
 using Application.DTOs.ProductsDTOs;
 using Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace NeonNovaApp.Controllers
@@ -44,6 +45,7 @@ namespace NeonNovaApp.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "isAdmin")]
         public async Task<ActionResult<CategoryDto>> Create(CreateCategoryRequestDto dto)
         {
             var category = await _categoryService.AddCategoryAsync(dto);
@@ -51,6 +53,7 @@ namespace NeonNovaApp.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = "isAdmin")]
         public async Task<ActionResult<CategoryDto>> Update(int id, UpdateCategoryRequestDto dto)
         {
             var category = await _categoryService.UpdateCategoryAsync(id, dto);
@@ -58,6 +61,7 @@ namespace NeonNovaApp.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = "isAdmin")]
         public async Task<ActionResult> Delete(int id)
         {
             await _categoryService.DeleteCategoryAsync(id);

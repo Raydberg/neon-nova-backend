@@ -7,7 +7,7 @@ namespace NeonNovaApp.Controllers
 {
     [Route("api/dashboard")]
     [ApiController]
-    // [Authorize(Policy = "RequireAdminRole")]
+    [Authorize(Policy = "isAdmin")]
     public class DashboardController : ControllerBase
     {
         private readonly IDashboardService _dashboardService;

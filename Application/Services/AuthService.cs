@@ -120,13 +120,15 @@ namespace Application.Services
             }
 
             var user = await _authRepository.FindUserByEmailAsync(email);
-
             var pictureUrl = claimsPrincipal.FindFirstValue("picture");
-            if (!string.IsNullOrEmpty(pictureUrl))
+
+            if (user != null && !string.IsNullOrEmpty(pictureUrl))
             {
-                if (user != null)
+                // Usar el nuevo método que elimina todos los claims duplicados y añade uno nuevo
+                var hasSamePicture = await _authRepository.HasPictureClaimAsync(user, pictureUrl);
+                if (!hasSamePicture)
                 {
-                    await _authRepository.AddClaimAsync(user, new Claim("picture", pictureUrl));
+                    await _authRepository.UpdatePictureClaimAsync(user, pictureUrl);
                 }
             }
 
@@ -146,8 +148,7 @@ namespace Application.Services
                     CreatedAt = DateTime.UtcNow
                 };
 
-                var result =
-                    await _authRepository.CreateUserAsync(user, Convert.ToBase64String(Guid.NewGuid().ToByteArray()));
+                var result = await _authRepository.CreateUserAsync(user, Convert.ToBase64String(Guid.NewGuid().ToByteArray()));
                 if (!result.Succeeded)
                 {
                     throw new ExternalLoginProviderException("Google", "No se pudo crear el usuario");

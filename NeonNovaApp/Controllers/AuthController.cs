@@ -73,7 +73,7 @@ public class AuthController : ControllerBase
 
 
     [HttpPut("admin-status")]
-    // [Authorize(Policy = "isAdmin")]
+    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> UpdateAdminStatus([FromBody] AdminStatusUpdateDto dto)
     {
         try
