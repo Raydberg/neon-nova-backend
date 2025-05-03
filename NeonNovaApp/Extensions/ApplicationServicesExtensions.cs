@@ -26,7 +26,7 @@ public static class ApplicationServicesExtensions
         services.AddScoped<ICartShopService, CartShopService>();
         services.AddScoped<IProductCommentService, ProductCommentService>();
         services.AddScoped<IDashboardService, DashboardService>();
-
+        services.AddScoped<IFavoriteService, FavoriteService>();
 
         // Registrar Repositorios
         services.AddScoped<IProductRepository, ProductRepository>();
@@ -38,6 +38,7 @@ public static class ApplicationServicesExtensions
         services.AddScoped<ICartShopRepository, CartShopRepository>();
         services.AddScoped<IProductCommentRepository, ProductCommentRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();
+        services.AddScoped<IFavoriteRepository, FavoriteRepository>();
 
         return services;
     }
@@ -51,7 +52,8 @@ public static class ApplicationServicesExtensions
             typeof(Application.Mappings.MappingUser).Assembly,
             typeof(Application.Mappings.MappingCategory).Assembly,
             typeof(Application.Mappings.MappingCartShop).Assembly,
-            typeof(Application.Mappings.MappingComent).Assembly
+            typeof(Application.Mappings.MappingComent).Assembly,
+            typeof(Application.Mappings.MappingFavorite).Assembly
         );
 
         return services;
