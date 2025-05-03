@@ -227,11 +227,11 @@ public class ProductRepository : IProductRepository
     }
 
     public async Task<PagedResult<ProductSimplified>> GetProductsForAdminAsync(
-        int pageNumber,
-        int pageSize,
-        int? categoryId = null,
-        ProductStatus? status = null,
-        string searchTerm = null)
+    int pageNumber,
+    int pageSize,
+    int? categoryId = null,
+    ProductStatus? status = null,
+    string searchTerm = null)
     {
         var query = _context.Products
             .Include(p => p.Category)
@@ -251,7 +251,11 @@ public class ProductRepository : IProductRepository
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             searchTerm = searchTerm.Trim().ToLower();
-            query = query.Where(p => p.Name.ToLower().Contains(searchTerm));
+
+            // Para SQL Server, usar comparación insensible a acentos
+            query = query.Where(p =>
+                EF.Functions.Collate(p.Name, "SQL_Latin1_General_CP1_CI_AI").Contains(searchTerm) ||
+                EF.Functions.Collate(p.Description, "SQL_Latin1_General_CP1_CI_AI").Contains(searchTerm));
         }
 
         var totalCount = await query.CountAsync();
