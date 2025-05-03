@@ -293,4 +293,65 @@ public class ProductRepository : IProductRepository
             TotalPages = totalPages
         };
     }
+
+    public async Task<PagedResult<ProductSimplified>> GetAllProductSimplifiedPaginatedAsync(
+     int pageNumber,
+     int pageSize,
+     int? categoryId = null,
+     string searchTerm = null)
+    {
+        var query = _context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images)
+            .Where(p => p.Status == ProductStatus.Active);
+
+        if (categoryId.HasValue)
+        {
+            query = query.Where(p => p.CategoryId == categoryId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            searchTerm = searchTerm.Trim().ToLower();
+
+            query = query.Where(p =>
+                EF.Functions.Collate(p.Name, "SQL_Latin1_General_CP1_CI_AI").Contains(searchTerm) ||
+                EF.Functions.Collate(p.Description, "SQL_Latin1_General_CP1_CI_AI").Contains(searchTerm));
+        }
+
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        var products = await query
+            .OrderBy(p => p.Id)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new ProductSimplified
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                CategoryName = p.Category.Name,
+                CategoryId = p.CategoryId,
+                Status = p.Status,
+                Punctuation = _context.ProductComments
+                    .Where(c => c.ProductId == p.Id)
+                    .Any()
+                    ? (int)Math.Round(_context.ProductComments
+                        .Where(c => c.ProductId == p.Id)
+                        .Average(c => (double)c.Rating))
+                    : 0,
+                ImageUrl = p.Images.OrderBy(i => i.Id).FirstOrDefault()!.ImageUrl
+            })
+            .ToListAsync();
+
+        return new PagedResult<ProductSimplified>
+        {
+            Items = products,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = totalPages
+        };
+    }
 }

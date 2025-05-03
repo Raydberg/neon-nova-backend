@@ -23,6 +23,11 @@ namespace Domain.Interfaces
             int? categoryId = null,
             ProductStatus? status = null, string searchTerm = null);
 
-        Task<PagedResult<ProductSimplified>> GetAllProductSimplifiedPaginatedAsync(int pageNumber, int pageSize);
+        Task<PagedResult<ProductSimplified>> GetAllProductSimplifiedPaginatedAsync(
+            int pageNumber,
+            int pageSize,
+            int? categoryId = null,
+            string searchTerm = null
+        );
     }
 }
