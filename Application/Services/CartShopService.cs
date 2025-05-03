@@ -124,26 +124,37 @@ public class CartShopService : ICartShopService
         return cartDto;
     }
 
-    public async Task<CartShopDto> UpdateCartItemAsync(UpdateCartShopItemDto dto)
-    {
-        var user = await _currentUserService.GetUser();
-        if (user is null) throw new UnauthorizedAccessException("Usuario no autenticado");
+    // public async Task<CartShopDto> UpdateCartItemAsync(UpdateCartShopItemDto dto)
+    // {
+    //     var user = await _currentUserService.GetUser();
+    //     if (user is null) throw new UnauthorizedAccessException("Usuario no autenticado");
 
-        var cart = await _cartShopRepository.GetActiveCartByUserIdAsync(user.Id);
-        if (cart is null) throw new KeyNotFoundException("Carrito no encontrado");
+    //     var cart = await _cartShopRepository.GetActiveCartByUserIdAsync(user.Id);
+    //     if (cart is null) throw new KeyNotFoundException("Carrito no encontrado");
 
-        var item = cart.CartShopDetails.FirstOrDefault(d => d.Id == dto.CartDetailId);
-        if (item is null) throw new KeyNotFoundException("Item del carrito no encontrado");
+    //     var item = cart.CartShopDetails.FirstOrDefault(d => d.Id == dto.CartDetailId);
+    //     if (item is null) throw new KeyNotFoundException("Item del carrito no encontrado");
 
-        item.Quantity = dto.Quantity;
-        await _cartShopRepository.UpdateCartAsync(cart);
+    //     // Validar que la cantidad sea positiva
+    //     if (dto.Quantity <= 0)
+    //         throw new ArgumentException("La cantidad debe ser mayor que cero");
 
-        // Actualizar cache
-        var cartDto = await MapCartToDto(cart);
-        _memoryCache.Set(string.Format(CartCacheKey, user.Id), cartDto, TimeSpan.FromMinutes(10));
+    //     var product = await _productRepository.GetByIdAsync(item.ProductId);
+    //     if (product == null)
+    //         throw new KeyNotFoundException($"Producto {item.ProductId} no encontrado");
 
-        return cartDto;
-    }
+    //     if (product.Stock < dto.Quantity)
+    //         throw new ApplicationException($"No hay suficiente stock para el producto '{product.Name}'. Stock disponible: {product.Stock}");
+
+    //     item.Quantity = dto.Quantity;
+    //     await _cartShopRepository.UpdateCartAsync(cart);
+
+    //     // Actualizar cache
+    //     var cartDto = await MapCartToDto(cart);
+    //     _memoryCache.Set(string.Format(CartCacheKey, user.Id), cartDto, TimeSpan.FromMinutes(10));
+
+    //     return cartDto;
+    // }
 
     public async Task<CartShopDto> RemoveCartItemAsync(int cartDetailId)
     {
@@ -213,5 +224,63 @@ public class CartShopService : ICartShopService
     private async Task<CartShopDto> MapCartToDto(CartShop cart)
     {
         return _mapper.Map<CartShopDto>(cart);
+    }
+
+    public async Task<CartShopDto> IncrementCartItemAsync(int cartDetailId)
+    {
+        var user = await _currentUserService.GetUser();
+        if (user is null) throw new UnauthorizedAccessException("Usuario no autenticado");
+
+        var cart = await _cartShopRepository.GetActiveCartByUserIdAsync(user.Id);
+        if (cart is null) throw new KeyNotFoundException("Carrito no encontrado");
+
+        var item = cart.CartShopDetails.FirstOrDefault(d => d.Id == cartDetailId);
+        if (item is null) throw new KeyNotFoundException("Item del carrito no encontrado");
+
+        var product = await _productRepository.GetByIdAsync(item.ProductId);
+        if (product == null)
+            throw new KeyNotFoundException($"Producto {item.ProductId} no encontrado");
+
+        // Verificar stock disponible
+        if (product.Stock <= item.Quantity)
+            throw new ApplicationException($"No hay suficiente stock para el producto '{product.Name}'. Stock disponible: {product.Stock}");
+
+        // Incrementar en 1
+        item.Quantity += 1;
+        await _cartShopRepository.UpdateCartAsync(cart);
+
+        // Actualizar cache
+        var cartDto = await MapCartToDto(cart);
+        _memoryCache.Set(string.Format(CartCacheKey, user.Id), cartDto, TimeSpan.FromMinutes(10));
+
+        return cartDto;
+    }
+
+    public async Task<CartShopDto> DecrementCartItemAsync(int cartDetailId)
+    {
+        var user = await _currentUserService.GetUser();
+        if (user is null) throw new UnauthorizedAccessException("Usuario no autenticado");
+
+        var cart = await _cartShopRepository.GetActiveCartByUserIdAsync(user.Id);
+        if (cart is null) throw new KeyNotFoundException("Carrito no encontrado");
+
+        var item = cart.CartShopDetails.FirstOrDefault(d => d.Id == cartDetailId);
+        if (item is null) throw new KeyNotFoundException("Item del carrito no encontrado");
+
+        // Si la cantidad es 1, eliminar el item
+        if (item.Quantity == 1)
+        {
+            return await RemoveCartItemAsync(cartDetailId);
+        }
+
+        // Decrementar en 1
+        item.Quantity -= 1;
+        await _cartShopRepository.UpdateCartAsync(cart);
+
+        // Actualizar cache
+        var cartDto = await MapCartToDto(cart);
+        _memoryCache.Set(string.Format(CartCacheKey, user.Id), cartDto, TimeSpan.FromMinutes(10));
+
+        return cartDto;
     }
 }
