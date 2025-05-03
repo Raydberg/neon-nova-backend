@@ -7,7 +7,7 @@ namespace Intrastructure.Data
 {
     public class ApplicationDbContext : IdentityDbContext<Users>
     {
-         public DbSet<Users> Users { get; set; }
+        public DbSet<Users> Users { get; set; }
 
         // public DbSet<Role> Roles { get; set; }
         public DbSet<Product> Products { get; set; }
@@ -20,6 +20,8 @@ namespace Intrastructure.Data
         public DbSet<CartShop> CartShops { get; set; }
         public DbSet<CartShopDetail> CartShopDetails { get; set; }
         public DbSet<Address> Addresses { get; set; }
+        public DbSet<Favorite> Favorites { get; set; }
+
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
         }
@@ -34,17 +36,11 @@ namespace Intrastructure.Data
                 // .Ignore(u => u.UserName)
                 // .Ignore(u => u.PhoneNumber)
                 .Ignore(u => u.SecurityStamp)
-                // .Ignore(u => u.EmailConfirmed)
-                // .Ignore(u => u.NormalizedEmail)
                 .Ignore(u => u.PhoneNumberConfirmed)
                 // .Ignore(u => u.PasswordHash)
                 .Ignore(u => u.TwoFactorEnabled)
-                // .Ignore(u=> u.NormalizedUserName)
-                // .Ignore(u=> u.ConcurrencyStamp)
-                // .Ignore(u=> u.LockoutEnabled)
-                // .Ignore(u=> u.LockoutEnd)
-                .Ignore(u=> u.AccessFailedCount);
-            
+                .Ignore(u => u.AccessFailedCount);
+
             //Cambio de nombres para las tablas de Identity
             modelBuilder.Entity<Users>().ToTable("Users");
             modelBuilder.Entity<IdentityRole>().ToTable("Roles");
@@ -79,16 +75,13 @@ namespace Intrastructure.Data
             {
                 entity.HasIndex(c => c.UserId);
                 entity.Property(c => c.UserId).HasColumnType("nvarchar(450)");
-    
+
                 entity.HasOne(c => c.User)
                     .WithMany()
                     .HasForeignKey(c => c.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Índice para OrderDetail.OrderId.
-            // modelBuilder.Entity<OrderDetail>()
-            //     .HasIndex(od => od.OrderId);
 
             // Índice para CartDetail.CartId.
             modelBuilder.Entity<CartShopDetail>()
@@ -105,6 +98,24 @@ namespace Intrastructure.Data
             // Índice para Product.Price.
             modelBuilder.Entity<Product>()
                 .HasIndex(p => p.Price);
+            modelBuilder.Entity<Favorite>()
+                .HasKey(f => f.Id);
+
+            modelBuilder.Entity<Favorite>()
+                .HasIndex(f => new { f.UserId, f.ProductId })
+                .IsUnique();
+
+            modelBuilder.Entity<Favorite>()
+                .HasOne(f => f.User)
+                .WithMany()
+                .HasForeignKey(f => f.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Favorite>()
+                .HasOne(f => f.Product)
+                .WithMany()
+                .HasForeignKey(f => f.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

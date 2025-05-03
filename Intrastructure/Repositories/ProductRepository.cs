@@ -354,4 +354,11 @@ public class ProductRepository : IProductRepository
             TotalPages = totalPages
         };
     }
+    public async Task<IEnumerable<ProductImage>> GetProductImagesAsync(int productId)
+    {
+        return await _context.ProductImages
+            .Where(i => i.ProductId == productId)
+            .OrderBy(i => i.Id)
+            .ToListAsync();
+    }
 }

@@ -249,6 +249,33 @@ namespace Intrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Favorites",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Favorites", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Favorites_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Favorites_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ProductComments",
                 columns: table => new
                 {
@@ -438,6 +465,17 @@ namespace Intrastructure.Migrations
                 column: "UsersId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Favorites_ProductId",
+                table: "Favorites",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Favorites_UserId_ProductId",
+                table: "Favorites",
+                columns: new[] { "UserId", "ProductId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OrderDetails_OrderId",
                 table: "OrderDetails",
                 column: "OrderId");
@@ -548,6 +586,9 @@ namespace Intrastructure.Migrations
         {
             migrationBuilder.DropTable(
                 name: "CartShopDetails");
+
+            migrationBuilder.DropTable(
+                name: "Favorites");
 
             migrationBuilder.DropTable(
                 name: "OrderDetails");
