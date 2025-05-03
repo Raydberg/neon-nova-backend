@@ -7,7 +7,7 @@ namespace NeonNovaApp.Controllers
 {
     [ApiController]
     [Route("api/comments")]
-    // [Authorize]
+    [Authorize]
     public class ProductCommentsController : ControllerBase
     {
         private readonly IProductCommentService _commentService;
@@ -18,8 +18,8 @@ namespace NeonNovaApp.Controllers
         }
 
        
-        [AllowAnonymous]
         [HttpGet("{productId}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetCommentsByProductId(int productId)
         {
             try
@@ -61,15 +61,15 @@ namespace NeonNovaApp.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(new { message = ex.Message }); // 404 Not Found
+                return NotFound(new { message = ex.Message }); 
             }
             catch (InvalidOperationException ex)
             {
-                return Unauthorized(new { message = ex.Message }); // 401 Unauthorized
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message }); // 400 Bad Request
+                return BadRequest(new { message = ex.Message }); 
             }
         }
 
@@ -80,15 +80,15 @@ namespace NeonNovaApp.Controllers
             try
             {
                 await _commentService.DeleteCommentAsync(commentId);
-                return NoContent(); // 204 No Content
+                return NoContent();
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(new { message = ex.Message }); // 404 Not Found
+                return NotFound(new { message = ex.Message }); 
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message }); // 400 Bad Request
+                return BadRequest(new { message = ex.Message });
             }
         }
 

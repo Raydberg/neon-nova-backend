@@ -17,7 +17,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet]
-    // [Authorize(Policy = "isAdmin")]
+    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> GetAllUsers()
     {
         var users = await _userService.GetAllUsersAsync();
@@ -79,7 +79,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPut("admin/{userId}")]
-    // [Authorize(Policy = "isAdmin")]
+    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> UpdateUserByAdmin(string userId, UserUpdateDto dto)
     {
         try
@@ -102,7 +102,7 @@ public class UserController : ControllerBase
     }
 
     [HttpDelete("{userId}")]
-    // [Authorize(Policy = "isAdmin")]
+    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> DeleteUser(string userId)
     {
         try
@@ -122,7 +122,7 @@ public class UserController : ControllerBase
 
 
     [HttpPut("{userId}/status")]
-// [Authorize(Policy = "isAdmin")]
+    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> UpdateStatus(string userId, [FromBody] UserStatusUpdateDto dto)
     {
         try

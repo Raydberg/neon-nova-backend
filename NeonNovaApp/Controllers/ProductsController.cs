@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.ProductsDTOs;
 using Application.Interfaces;
 using Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace NeonNovaApp.Controllers;
@@ -19,6 +20,7 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet("simplified-admin")]
+    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> GetProductsForAdmin(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
@@ -37,6 +39,7 @@ public class ProductController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> Create([FromForm] CreateProductRequestDTO dto)
     {
         var product = await _productService.CreateAsync(dto);
@@ -92,6 +95,7 @@ public class ProductController : ControllerBase
     }
 
     [HttpPut("{productId}/images/{imageId}")]
+    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> UpdateImage(int productId, int imageId, [FromForm] UpdateProductImageDTO dto)
     {
         var updatedImage = await _productService.UpdateImageAsync(productId, imageId, dto.Image);
@@ -99,6 +103,7 @@ public class ProductController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> Delete(int id)
     {
         await _productService.DeleteAsync(id);
@@ -106,6 +111,7 @@ public class ProductController : ControllerBase
     }
 
     [HttpPost("{id}/images")]
+    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> AddImage(int id, IFormFile image)
     {
         await _productImageService.AddImageAsync(id, image);
@@ -113,6 +119,7 @@ public class ProductController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> Update(int id, [FromForm] UpdateProductRequestDTO dto)
     {
         try
@@ -128,6 +135,7 @@ public class ProductController : ControllerBase
     }
 
     [HttpDelete("{productId}/images/{imageId}")]
+    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> DeleteImage(int productId, int imageId)
     {
         try
