@@ -130,7 +130,16 @@ namespace Application.Services
 
             if (!string.IsNullOrEmpty(pictureClaim?.Value))
             {
-                return $"/api/proxy/image?url={Uri.EscapeDataString(pictureClaim.Value)}";
+                // Para URLs de Google, devolver la URL directa
+                if (pictureClaim.Value.Contains("googleusercontent.com") || pictureClaim.Value.Contains("ggpht.com"))
+                {
+                    return pictureClaim.Value;
+                }
+                else
+                {
+                    // Para otras URLs, usar el proxy
+                    return $"/api/proxy/image?url={Uri.EscapeDataString(pictureClaim.Value)}";
+                }
             }
             return null;
         }
