@@ -44,7 +44,15 @@ public class UserService : IUserService
             var pictureClaim = claims.FirstOrDefault(c => c.Type == "picture");
             if (!string.IsNullOrEmpty(pictureClaim?.Value))
             {
-                userDto.AvatarUrl = $"/api/proxy/image?url={Uri.EscapeDataString(pictureClaim.Value)}";
+                // Para imágenes de Google, usar la URL directa sin proxy
+                if (pictureClaim.Value.Contains("googleusercontent.com") || pictureClaim.Value.Contains("ggpht.com"))
+                {
+                    userDto.AvatarUrl = pictureClaim.Value;
+                }
+                else
+                {
+                    userDto.AvatarUrl = $"/api/proxy/image?url={Uri.EscapeDataString(pictureClaim.Value)}";
+                }
             }
 
             userDto.InitialAvatar =
