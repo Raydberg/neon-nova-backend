@@ -20,7 +20,6 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet("simplified-admin")]
-    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> GetProductsForAdmin(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
