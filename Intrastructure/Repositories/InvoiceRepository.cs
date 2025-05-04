@@ -16,7 +16,6 @@ public class InvoiceService : IInvoiceService
     {
         return await _context.Products
             .Include(p => p.Category)
-            .OrderByDescending(i => i.CreatedAt)
             .ToListAsync();
     }
 }

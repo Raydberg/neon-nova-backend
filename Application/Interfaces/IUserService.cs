@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.UsersDTOs;
+using Domain.Entities;
 
 namespace Application.Interfaces;
 
@@ -12,4 +13,5 @@ public interface IUserService
 
     Task UpdateUserStatusAsync(string userId, bool isEnabled);
     Task<UserDto> UpdateUserByAdminAsync(string userId, UserUpdateDto dto);
+    Task<List<Users>> ObtenerReporteAsync();
 }
