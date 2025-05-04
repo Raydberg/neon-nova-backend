@@ -1,10 +1,12 @@
 ﻿using Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace NeonNovaApp.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Policy = "isAdmin")]
     public class ReportController : ControllerBase
     {
         private readonly IGenerateInvoiceCommand _invoiceCommand;
