@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace NeonNovaApp.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/report")]
     [Authorize(Policy = "isAdmin")]
     public class ReportController : ControllerBase
     {
@@ -18,11 +18,11 @@ namespace NeonNovaApp.Controllers
             _userCommand = userCommand;
         }
 
-        [HttpGet("generate-invoice")]
-        public async Task<IActionResult> GenerateInvoice()
+        [HttpGet("generate-product")]
+        public async Task<IActionResult> GenerateProducts()
         {
             byte[] pdf = await _invoiceCommand.ExecuteAsync();
-            return File(pdf, "application/pdf", "ReporteFacturas.pdf");
+            return File(pdf, "application/pdf", "ReporteProductos.pdf");
         }
 
         [HttpGet("generate-user")]
