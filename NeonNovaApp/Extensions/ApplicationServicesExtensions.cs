@@ -2,6 +2,7 @@
 using Application.Interfaces;
 using Application.Services;
 using Domain.Interfaces;
+using Intrastructure.Report;
 using Intrastructure.Repositories;
 using NeonNovaApp.Services;
 
@@ -27,7 +28,9 @@ public static class ApplicationServicesExtensions
         services.AddScoped<IProductCommentService, ProductCommentService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IFavoriteService, FavoriteService>();
-
+        services.AddScoped<IInvoiceService, InvoiceService>();
+        services.AddScoped<IPdfGenerator, PdfGenerator>();
+        services.AddScoped<IGenerateInvoiceCommand, GenerateInvoiceCommand>();
         // Registrar Repositorios
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IAuthRepository, AuthRepository>();
