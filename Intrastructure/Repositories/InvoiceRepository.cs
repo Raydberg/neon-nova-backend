@@ -1,10 +1,5 @@
 ﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Intrastructure.Data;
 using Application.Interfaces;
 
@@ -20,6 +15,7 @@ public class InvoiceService : IInvoiceService
     public async Task<List<Product>> ObtenerFacturasAsync()
     {
         return await _context.Products
+            .Include(p => p.Category)
             .OrderByDescending(i => i.CreatedAt)
             .ToListAsync();
     }
