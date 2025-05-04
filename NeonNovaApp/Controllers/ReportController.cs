@@ -7,16 +7,27 @@ namespace NeonNovaApp.Controllers
     [Route("api/[controller]")]
     public class ReportController : ControllerBase
     {
-        private readonly IGenerateInvoiceCommand _cmd;
+        private readonly IGenerateInvoiceCommand _invoiceCommand;
+        private readonly IGenerateUserCommand _userCommand;
 
-        public ReportController(IGenerateInvoiceCommand cmd)
-            => _cmd = cmd;
-
-        [HttpGet("generate")]
-        public async Task<IActionResult> Generate()
+        public ReportController(IGenerateInvoiceCommand invoiceCommand, IGenerateUserCommand userCommand)
         {
-            byte[] pdf = await _cmd.ExecuteAsync();
+            _invoiceCommand = invoiceCommand;
+            _userCommand = userCommand;
+        }
+
+        [HttpGet("generate-invoice")]
+        public async Task<IActionResult> GenerateInvoice()
+        {
+            byte[] pdf = await _invoiceCommand.ExecuteAsync();
             return File(pdf, "application/pdf", "ReporteFacturas.pdf");
+        }
+
+        [HttpGet("generate-user")]
+        public async Task<IActionResult> GenerateUser()
+        {
+            byte[] pdf = await _userCommand.ExecuteAsync();
+            return File(pdf, "application/pdf", "ReporteUsuarios.pdf");
         }
     }
 }

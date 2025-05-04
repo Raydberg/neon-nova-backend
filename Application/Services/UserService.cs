@@ -267,4 +267,9 @@ public class UserService : IUserService
         var updateUser = await _userRepository.UpdateUserAsync(user);
         return _mapper.Map<UserDto>(updateUser);
     }
+
+    public async Task<List<Users>> ObtenerReporteAsync()
+    {
+        return (await _userRepository.GetAllUsersAsync()).ToList();
+    }
 }

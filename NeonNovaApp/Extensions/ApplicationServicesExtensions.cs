@@ -30,7 +30,9 @@ public static class ApplicationServicesExtensions
         services.AddScoped<IFavoriteService, FavoriteService>();
         services.AddScoped<IInvoiceService, InvoiceService>();
         services.AddScoped<IPdfGenerator, PdfGenerator>();
+        services.AddScoped<IPdfGeneratorUsers, PdfGeneratorUsers>();
         services.AddScoped<IGenerateInvoiceCommand, GenerateInvoiceCommand>();
+        services.AddScoped<IGenerateUserCommand, GenerateUserCommand>();
         // Registrar Repositorios
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IAuthRepository, AuthRepository>();
