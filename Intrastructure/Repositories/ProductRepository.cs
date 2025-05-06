@@ -65,6 +65,16 @@ public class ProductRepository : IProductRepository
 
     public async Task UpdateAsync(Product product)
     {
+
+        if (product.Stock < 0)
+        {
+            product.Stock = 0;
+        }
+        else if (product.Status == ProductStatus.OutOfStock && product.Stock > 0)
+        {
+            product.Status = ProductStatus.Active;
+        }
+
         _context.Products.Attach(product);
         var entry = _context.Entry(product);
         entry.Property(p => p.Name).IsModified = true;
@@ -245,14 +255,20 @@ public class ProductRepository : IProductRepository
 
         if (status.HasValue)
         {
-            query = query.Where(p => p.Status == status.Value);
+            if (status.Value == ProductStatus.OutOfStock)
+            {
+                query = query.Where(p => p.Status == ProductStatus.OutOfStock || p.Stock <= 0);
+            }
+            else
+            {
+                query = query.Where(p => p.Status == status.Value && p.Stock > 0);
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             searchTerm = searchTerm.Trim().ToLower();
 
-            // Para SQL Server, usar comparación insensible a acentos
             query = query.Where(p =>
                 EF.Functions.Collate(p.Name, "SQL_Latin1_General_CP1_CI_AI").Contains(searchTerm) ||
                 EF.Functions.Collate(p.Description, "SQL_Latin1_General_CP1_CI_AI").Contains(searchTerm));
@@ -272,7 +288,8 @@ public class ProductRepository : IProductRepository
                 Price = p.Price,
                 CategoryName = p.Category.Name,
                 CategoryId = p.CategoryId,
-                Status = p.Status,
+                Status = p.Stock <= 0 ? ProductStatus.OutOfStock : p.Status,
+                Stock = p.Stock,
                 Punctuation = _context.ProductComments
                     .Where(c => c.ProductId == p.Id)
                     .Any()
@@ -293,7 +310,20 @@ public class ProductRepository : IProductRepository
             TotalPages = totalPages
         };
     }
+    public async Task<int> UpdateOutOfStockProductsAsync()
+    {
+        var productsToUpdate = await _context.Products
+            .Where(p => p.Stock <= 0 && p.Status != ProductStatus.OutOfStock)
+            .ToListAsync();
 
+        foreach (var product in productsToUpdate)
+        {
+            product.Status = ProductStatus.OutOfStock;
+        }
+
+        await _context.SaveChangesAsync();
+        return productsToUpdate.Count;
+    }
     public async Task<PagedResult<ProductSimplified>> GetAllProductSimplifiedPaginatedAsync(
      int pageNumber,
      int pageSize,

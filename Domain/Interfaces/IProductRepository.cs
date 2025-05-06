@@ -17,6 +17,7 @@ namespace Domain.Interfaces
         Task<IEnumerable<ProductSimplified>> GetAllProductSimplifiedAsync();
         Task UpdateProductPunctuationAsync(int productId);
         Task<IEnumerable<ProductImage>> GetProductImagesAsync(int productId);
+        Task<int> UpdateOutOfStockProductsAsync();
         Task<PagedResult<ProductSimplified>> GetProductsForAdminAsync(
             int pageNumber,
             int pageSize,

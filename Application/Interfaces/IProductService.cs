@@ -18,7 +18,7 @@ public interface IProductService
     Task<ProductWithCommentsPaginatedResponseDto> GetAllPaginatedWithCommentsAsync(
         int pageNumber, int pageSize, ProductStatus? status = null
     );
-
+    Task<int> UpdateOutOfStockProductsAsync();
     Task<ProductResponseDTO> GetByIdWithImagesAsync(int id);
     Task<ProductResponseDTO> UpdateAsync(int id, UpdateProductRequestDTO dto);
     Task DeleteAsync(int id);

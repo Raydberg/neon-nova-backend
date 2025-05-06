@@ -333,11 +333,11 @@ public class ProductService : IProductService
     }
 
     public async Task<PaginatedResponseDto<ProductoSimplificadoDto>> GetProductsFormAdmin(
-        int pageNumber,
-        int pageSize,
-        int? categoryId = null,
-        ProductStatus? status = default,
-        string searchTerm = null)
+    int pageNumber,
+    int pageSize,
+    int? categoryId = null,
+    ProductStatus? status = default,
+    string searchTerm = null)
     {
         var simplifiedProducts = await _repository.GetProductsForAdminAsync(
             pageNumber, pageSize, categoryId, status, searchTerm);
@@ -350,7 +350,8 @@ public class ProductService : IProductService
             CategoryId = p.CategoryId,
             CategoryName = p.CategoryName,
             Punctuation = p.Punctuation,
-            Status = p.Status,
+            Status = p.Stock <= 0 ? ProductStatus.OutOfStock : p.Status,
+            Stock = p.Stock,
             ImageUrl = p.ImageUrl
         }).ToList();
 
@@ -362,5 +363,9 @@ public class ProductService : IProductService
             PageSize = simplifiedProducts.PageSize,
             TotalPages = simplifiedProducts.TotalPages
         };
+    }
+    public async Task<int> UpdateOutOfStockProductsAsync()
+    {
+        return await _repository.UpdateOutOfStockProductsAsync();
     }
 }
