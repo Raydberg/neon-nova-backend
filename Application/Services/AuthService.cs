@@ -39,7 +39,6 @@ namespace Application.Services
                 Email = dto.Email,
                 UserName = dto.Email,
                 PhoneNumber = dto.Phone,
-                //Mas adelante poner verificaicon de Email
                 EmailConfirmed = true,
                 LockoutEnabled = false,
                 LockoutEnd = null
@@ -68,7 +67,7 @@ namespace Application.Services
             var user = await _authRepository.FindUserByEmailAsync(dto.Email);
             if (user is null) throw new Exception("Login Incorrecto");
 
-            if (user.LockoutEnabled && (user.LockoutEnd == null || user.LockoutEnd > DateTimeOffset.UtcNow))
+            if (user.LockoutEnabled && user.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.UtcNow)
             {
                 throw new UnauthorizedAccessException("Esta cuenta ha sido desactivada por un administrador.");
             }
@@ -90,12 +89,10 @@ namespace Application.Services
         {
             var user = await _currentUserService.GetUser();
             if (user is null) throw new Exception("Usuario no encontrado");
-
-            if (user.LockoutEnabled && (user.LockoutEnd == null || user.LockoutEnd > DateTimeOffset.UtcNow))
+            if (user.LockoutEnabled && user.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.UtcNow)
             {
                 throw new UnauthorizedAccessException("Esta cuenta ha sido desactivada por un administrador.");
             }
-
             var loginDto = new LoginRequestDto
             {
                 Email = user.Email!,
@@ -144,7 +141,8 @@ namespace Application.Services
                     FirstName = firstName,
                     LastName = lastName,
                     EmailConfirmed = true,
-                    LockoutEnabled = false,
+                    LockoutEnabled = false,  
+                    LockoutEnd = null,       
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -162,7 +160,7 @@ namespace Application.Services
                 }
             }
 
-            if (user.LockoutEnabled && user.LockoutEnd > DateTimeOffset.UtcNow)
+            if (user.LockoutEnabled && user.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.UtcNow)
             {
                 throw new UnauthorizedAccessException("Esta cuenta ha sido desactivada por un administrador.");
             }
