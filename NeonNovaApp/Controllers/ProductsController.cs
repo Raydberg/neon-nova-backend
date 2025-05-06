@@ -57,7 +57,20 @@ public class ProductController : ControllerBase
         var products = await _productService.GetAllPaginatedWithCommentsAsync(pageNumber, pageSize, status);
         return Ok(products);
     }
-
+    [HttpPost("update-out-of-stock")]
+    [Authorize(Policy = "isAdmin")]
+    public async Task<IActionResult> UpdateOutOfStockProducts()
+    {
+        try
+        {
+            int updatedCount = await _productService.UpdateOutOfStockProductsAsync();
+            return Ok(new { message = $"Se actualizaron {updatedCount} productos a estado 'Agotado'" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error al actualizar productos", detail = ex.Message });
+        }
+    }
     [HttpGet]
     public async Task<ActionResult<ProductPaginatedResponseDto>> GetAllAsync(
         [FromQuery] int pageNumber = 1,
